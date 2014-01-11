@@ -21,4 +21,19 @@ class EppClient {
 		stream = null
 	}
 
+	def getStreamStatus() {
+		[
+			isReady:            stream && !stream.closed && stream.connected && !stream.inputShutdown && !stream.outputShutdown,
+			exists:             stream != null,
+			isClosed:           stream?.closed,
+			isConnected:        stream?.connected,
+			isInputShutdown:    stream?.inputShutdown,
+			isOutputShutdown:   stream?.outputShutdown
+		]
+	}
+
+	boolean isReady() {
+		streamStatus.isReady
+	}
+
 }

@@ -1,5 +1,6 @@
 package grails.plugin.heartinternet.resellerapi
 import grails.plugin.spock.UnitSpec
+import spock.lang.Unroll
 
 class EppClientSpec extends UnitSpec {
 
@@ -68,6 +69,41 @@ class EppClientSpec extends UnitSpec {
 
 		then: "the first stream is closed"
 			1 * firstStream.close()
+
+	}
+
+	@Unroll("the correct stream status is given when #status")
+	def "the correct stream status is given"() {
+
+		given: "a stream"
+			def stream = exists ? Mock(Socket) : null
+			dummyClient.stream = stream
+		and: "stream state"
+			stream.isClosed()           >> isClosed
+			stream.isConnected()        >> isConnected
+			stream.isInputShutdown()    >> isInputShutdown
+			stream.isOutputShutdown()   >> isOutputShutdown
+
+		when: "getting the status"
+			def status = dummyClient.streamStatus
+			println status
+
+		then: "the status is correct"
+			status                  != null
+			status.exists           == exists
+			status.isClosed         == isClosed
+			status.isConnected      == isConnected
+			status.isInputShutdown  == isInputShutdown
+			status.isOutputShutdown == isOutputShutdown
+			status.isReady          == isOkay
+			dummyClient.ready       == isOkay
+
+		where:
+			scenario                        | exists    | isClosed  | isConnected   | isInputShutdown   | isOutputShutdown  | isOkay
+			"fully open"                    | true      | false     | true          | false             | false             | true
+			"stream not open"               | false     | null      | null          | null              | null              | false
+			"stream open but in closed"     | true      | false     | true          | true              | false             | false
+			"stream closed"                 | true      | true      | true          | true              | false             | false
 
 	}
 
