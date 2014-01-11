@@ -12,7 +12,13 @@ class EppClient {
 	Socket stream
 
 	void openStream() {
+		stream?.close()
 		stream = SSLSocketFactory.default.createSocket(host, port)
+	}
+
+	void closeStream() {
+		stream?.close()
+		stream = null
 	}
 
 }

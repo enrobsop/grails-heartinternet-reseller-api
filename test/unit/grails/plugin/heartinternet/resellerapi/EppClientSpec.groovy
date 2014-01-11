@@ -1,5 +1,4 @@
 package grails.plugin.heartinternet.resellerapi
-
 import grails.plugin.spock.UnitSpec
 
 class EppClientSpec extends UnitSpec {
@@ -15,7 +14,7 @@ class EppClientSpec extends UnitSpec {
 		)
 	}
 
-	def "it checks that config has been completed"() {
+	def "it initialises correctly"() {
 		when: "initialising with values"
 			def theClient = new EppClient(
 				host:   "api.somehost.co.uk",
@@ -40,6 +39,35 @@ class EppClientSpec extends UnitSpec {
 			theStream != null
 			theStream.host == dummyClient.host
 			theStream.port == dummyClient.port
+
+	}
+
+	def "closing a stream works correctly"() {
+
+		given: "a client with an open stream"
+			def stream = Mock(Socket)
+			dummyClient.stream = stream
+
+		when: "closing the stream"
+			dummyClient.closeStream()
+
+		then: "the stream closes correctly"
+			1 * stream.close()
+			dummyClient.stream == null
+
+	}
+
+	def "opening a second stream should close the first stream"() {
+
+		given: "a client with an open stream"
+			def firstStream = Mock(Socket)
+			dummyClient.stream = firstStream
+
+		when: "opening a second stream"
+			dummyClient.openStream()
+
+		then: "the first stream is closed"
+			1 * firstStream.close()
 
 	}
 
