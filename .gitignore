@@ -39,6 +39,7 @@
 # "temporary" build files
 target*/
 **/plugin.xml
+out/
 
 # other
 *.iws
