@@ -107,4 +107,55 @@ class EppClientSpec extends UnitSpec {
 
 	}
 
+	def "a request is executed correctly"() {
+
+		given: "a request"
+			def theRequest      = Mock(ApiRequest)
+			def theTestMessage  = "<test>mymessage</test>"
+			theRequest.getMessage() >> theTestMessage
+		and: "a stream"
+			def stream = mockReadyStream()
+			dummyClient.stream = stream
+		and: "with io streams"
+			def outgoing = Mock(OutputStream)
+			def incoming = Mock(InputStream)
+			stream.getInputStream()     >> incoming
+			stream.getOutputStream()    >> outgoing
+
+		when: "it is executed"
+			dummyClient.send(theRequest)
+
+		then:
+			1 * outgoing.write(theTestMessage.bytes)
+			1 * outgoing.flush()
+			3 * incoming.read(_, 0, 1000) >>> [0, 0, 5]
+			1 * incoming.read(_, 5, 1000) >> 5
+			1 * incoming.read(_, 10, 1000) >> 10
+			1 * incoming.read(_, 20, 1000) >> 10
+			1 * incoming.read(_, 30, 1000) >> 13
+			1 * incoming.read(_, 43, 1000) >> -1
+			1 * theRequest.handleResponse(_)
+
+	}
+
+	def "attempting to send while the stream is not ready should result in an exception"() {
+		given: "a request"
+			def theRequest = Mock(ApiRequest)
+
+		when:
+			dummyClient.send(theRequest)
+
+		then:
+			thrown EppClientException
+	}
+
+	private def mockReadyStream() {
+		def stream = Mock(Socket)
+		stream.isClosed()           >> false
+		stream.isConnected()        >> true
+		stream.isInputShutdown()    >> false
+		stream.isOutputShutdown()   >> false
+		stream
+	}
+
 }
