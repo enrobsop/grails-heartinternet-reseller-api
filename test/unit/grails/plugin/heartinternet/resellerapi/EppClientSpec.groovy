@@ -30,62 +30,62 @@ class EppClientSpec extends UnitSpec {
 			theClient.pw    == "aPassword"
 	}
 
-	def "it creates a stream correctly"() {
+	def "it connects correctly"() {
 
-		when: "opening a stream"
-			dummyClient.openStream()
-			def theStream = dummyClient.stream
+		when: "connecting to server"
+			dummyClient.connect()
+			def theConnection = dummyClient.connection
 
-		then: "the stream is correct"
-			theStream != null
-			theStream.host == dummyClient.host
-			theStream.port == dummyClient.port
-
-	}
-
-	def "closing a stream works correctly"() {
-
-		given: "a client with an open stream"
-			def stream = Mock(Socket)
-			dummyClient.stream = stream
-
-		when: "closing the stream"
-			dummyClient.closeStream()
-
-		then: "the stream closes correctly"
-			1 * stream.close()
-			dummyClient.stream == null
+		then: "the connection is correct"
+			theConnection != null
+			theConnection.host == dummyClient.host
+			theConnection.port == dummyClient.port
 
 	}
 
-	def "opening a second stream should close the first stream"() {
+	def "closing a connection works correctly"() {
 
-		given: "a client with an open stream"
-			def firstStream = Mock(Socket)
-			dummyClient.stream = firstStream
+		given: "a client with an open connection"
+			def connection = Mock(Socket)
+			dummyClient.connection = connection
 
-		when: "opening a second stream"
-			dummyClient.openStream()
+		when: "closing the connection"
+			dummyClient.closeConnection()
 
-		then: "the first stream is closed"
-			1 * firstStream.close()
+		then: "the connection closes correctly"
+			1 * connection.close()
+			dummyClient.connection == null
 
 	}
 
-	@Unroll("the correct stream status is given when #status")
-	def "the correct stream status is given"() {
+	def "making a second connection should close the first"() {
 
-		given: "a stream"
-			def stream = exists ? Mock(Socket) : null
-			dummyClient.stream = stream
-		and: "stream state"
-			stream.isClosed()           >> isClosed
-			stream.isConnected()        >> isConnected
-			stream.isInputShutdown()    >> isInputShutdown
-			stream.isOutputShutdown()   >> isOutputShutdown
+		given: "a client with an open connection"
+			def firstConnection = Mock(Socket)
+			dummyClient.connection = firstConnection
+
+		when: "opening a second connection"
+			dummyClient.connect()
+
+		then: "the first connection is closed"
+			1 * firstConnection.close()
+
+	}
+
+	@Unroll("the correct connection status is given when #status")
+	def "the correct connection status is given"() {
+
+		given: "a connection"
+			def connection = exists ? Mock(Socket) : null
+			dummyClient.connection = connection
+		and: "connection state"
+			connection.isClosed()           >> isClosed
+			connection.isConnected()        >> isConnected
+			connection.isInputShutdown()    >> isInputShutdown
+			connection.isOutputShutdown()   >> isOutputShutdown
 
 		when: "getting the status"
-			def status = dummyClient.streamStatus
+			def status = dummyClient.connectionStatus
 			println status
 
 		then: "the status is correct"
@@ -101,9 +101,9 @@ class EppClientSpec extends UnitSpec {
 		where:
 			scenario                        | exists    | isClosed  | isConnected   | isInputShutdown   | isOutputShutdown  | isOkay
 			"fully open"                    | true      | false     | true          | false             | false             | true
-			"stream not open"               | false     | null      | null          | null              | null              | false
-			"stream open but in closed"     | true      | false     | true          | true              | false             | false
-			"stream closed"                 | true      | true      | true          | true              | false             | false
+			"connection not open"           | false     | null      | null          | null              | null              | false
+			"connection open but in closed" | true      | false     | true          | true              | false             | false
+			"connection closed"             | true      | true      | true          | true              | false             | false
 
 	}
 
@@ -113,14 +113,14 @@ class EppClientSpec extends UnitSpec {
 			def theRequest      = Mock(ApiRequest)
 			def theTestMessage  = "<test>mymessage</test>"
 			theRequest.getMessage() >> theTestMessage
-		and: "a stream"
-			def stream = mockReadyStream()
-			dummyClient.stream = stream
-		and: "with io streams"
+		and: "a connection"
+			def connection = mockReadyConnection()
+			dummyClient.connection = connection
+		and: "with io connections"
 			def outgoing = Mock(OutputStream)
 			def incoming = Mock(InputStream)
-			stream.getInputStream()     >> incoming
-			stream.getOutputStream()    >> outgoing
+			connection.getInputStream()     >> incoming
+			connection.getOutputStream()    >> outgoing
 
 		when: "it is executed"
 			dummyClient.send(theRequest)
@@ -138,7 +138,7 @@ class EppClientSpec extends UnitSpec {
 
 	}
 
-	def "attempting to send while the stream is not ready should result in an exception"() {
+	def "attempting to send while the connection is not ready should result in an exception"() {
 		given: "a request"
 			def theRequest = Mock(ApiRequest)
 
@@ -149,13 +149,13 @@ class EppClientSpec extends UnitSpec {
 			thrown EppClientException
 	}
 
-	private def mockReadyStream() {
-		def stream = Mock(Socket)
-		stream.isClosed()           >> false
-		stream.isConnected()        >> true
-		stream.isInputShutdown()    >> false
-		stream.isOutputShutdown()   >> false
-		stream
+	private def mockReadyConnection() {
+		def connection = Mock(Socket)
+		connection.isClosed()           >> false
+		connection.isConnected()        >> true
+		connection.isInputShutdown()    >> false
+		connection.isOutputShutdown()   >> false
+		connection
 	}
 
 }

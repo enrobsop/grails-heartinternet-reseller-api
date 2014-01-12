@@ -9,46 +9,46 @@ class EppClient {
 	def clID
 	def pw
 
-	Socket stream
+	Socket connection
 
-	void openStream() {
-		stream?.close()
-		stream = SSLSocketFactory.default.createSocket(host, port)
+	void connect() {
+		connection?.close()
+		connection = SSLSocketFactory.default.createSocket(host, port)
 	}
 
-	void closeStream() {
-		stream?.close()
-		stream = null
+	void closeConnection() {
+		connection?.close()
+		connection = null
 	}
 
-	def getStreamStatus() {
+	def getConnectionStatus() {
 		[
-			isReady:            stream && !stream.closed && stream.connected && !stream.inputShutdown && !stream.outputShutdown,
-			exists:             stream != null,
-			isClosed:           stream?.closed,
-			isConnected:        stream?.connected,
-			isInputShutdown:    stream?.inputShutdown,
-			isOutputShutdown:   stream?.outputShutdown
+			isReady:            connection && !connection.closed && connection.connected && !connection.inputShutdown && !connection.outputShutdown,
+			exists:             connection != null,
+			isClosed:           connection?.closed,
+			isConnected:        connection?.connected,
+			isInputShutdown:    connection?.inputShutdown,
+			isOutputShutdown:   connection?.outputShutdown
 		]
 	}
 
 	boolean isReady() {
-		streamStatus.isReady
+		connectionStatus.isReady
 	}
 
 	def send(ApiRequest request) {
 		println "------------------------"
-		sendToStream(request.message)
+		sendData(request.message)
 		println " ------"
 		def received = receiveFromStream()
 		println "------------------------"
 		request.handleResponse(received)
 	}
 
-	private void sendToStream(message) {
-		handleSendWhenNotReady()
+	private void sendData(message) {
+		handleConnectionNotReady()
 		println "Sending...\n$message"
-		def sout = stream.outputStream
+		def sout = connection.outputStream
 		sout.write(message.bytes)
 		sout.flush()
 		println "Sending complete."
@@ -59,7 +59,7 @@ class EppClient {
 
 		final int maxBytes = 1000
 
-		def sin     = stream.inputStream
+		def sin     = connection.inputStream
 		int mark    = 0
 		def results = []
 		int n       = 0
@@ -78,9 +78,9 @@ class EppClient {
 
 	}
 
-	private void handleSendWhenNotReady() {
+	private void handleConnectionNotReady() {
 		if (!ready) {
-			throw new EppClientException("EppClient is not ready. Has the stream been opened using EppClient.openStream? Stream status=$streamStatus", null)
+			throw new EppClientException("EppClient is not ready. Has the connection been opened using EppClient.connect? Connection status=$connectionStatus", null)
 		}
 	}
 
