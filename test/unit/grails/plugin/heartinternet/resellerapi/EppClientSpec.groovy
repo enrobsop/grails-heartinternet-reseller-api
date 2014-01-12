@@ -2,6 +2,8 @@ package grails.plugin.heartinternet.resellerapi
 import grails.plugin.spock.UnitSpec
 import spock.lang.Unroll
 
+import java.nio.channels.SocketChannel
+
 class EppClientSpec extends UnitSpec {
 
 	def dummyClient
@@ -38,22 +40,22 @@ class EppClientSpec extends UnitSpec {
 
 		then: "the connection is correct"
 			theConnection != null
-			theConnection.host == dummyClient.host
-			theConnection.port == dummyClient.port
+			theConnection.remoteAddress.hostName == dummyClient.host
+			theConnection.remoteAddress.port == dummyClient.port
 
 	}
 
 	def "closing a connection works correctly"() {
 
 		given: "a client with an open connection"
-			def connection = Mock(Socket)
+			def connection = Mock(SocketChannel)
 			dummyClient.connection = connection
 
 		when: "closing the connection"
 			dummyClient.closeConnection()
 
 		then: "the connection closes correctly"
-			1 * connection.close()
+			1 * connection.implCloseSelectableChannel()
 			dummyClient.connection == null
 
 	}
@@ -61,49 +63,42 @@ class EppClientSpec extends UnitSpec {
 	def "making a second connection should close the first"() {
 
 		given: "a client with an open connection"
-			def firstConnection = Mock(Socket)
+			def firstConnection = Mock(SocketChannel)
 			dummyClient.connection = firstConnection
 
 		when: "opening a second connection"
 			dummyClient.connect()
 
 		then: "the first connection is closed"
-			1 * firstConnection.close()
+			1 * firstConnection.implCloseSelectableChannel()
 
 	}
 
-	@Unroll("the correct connection status is given when #status")
+	@Unroll("the correct connection status is given when #scenario")
 	def "the correct connection status is given"() {
 
 		given: "a connection"
-			def connection = exists ? Mock(Socket) : null
+			def connection = exists ? Mock(SocketChannel) : null
 			dummyClient.connection = connection
 		and: "connection state"
-			connection.isClosed()           >> isClosed
+			connection.isOpen()             >> isOpen
 			connection.isConnected()        >> isConnected
-			connection.isInputShutdown()    >> isInputShutdown
-			connection.isOutputShutdown()   >> isOutputShutdown
 
 		when: "getting the status"
 			def status = dummyClient.connectionStatus
-			println status
 
 		then: "the status is correct"
 			status                  != null
 			status.exists           == exists
-			status.isClosed         == isClosed
+			status.isOpen           == isOpen
 			status.isConnected      == isConnected
-			status.isInputShutdown  == isInputShutdown
-			status.isOutputShutdown == isOutputShutdown
-			status.isReady          == isOkay
-			dummyClient.ready       == isOkay
+			status.isReady          == isReady
+			dummyClient.ready       == isReady
 
 		where:
-			scenario                        | exists    | isClosed  | isConnected   | isInputShutdown   | isOutputShutdown  | isOkay
-			"fully open"                    | true      | false     | true          | false             | false             | true
-			"connection not open"           | false     | null      | null          | null              | null              | false
-			"connection open but in closed" | true      | false     | true          | true              | false             | false
-			"connection closed"             | true      | true      | true          | true              | false             | false
+			scenario                | exists    | isOpen    | isConnected   | isReady
+			"fully open"            | true      | true      | true          | true
+			"connection not open"   | false     | null      | null          | false
 
 	}
 
@@ -116,24 +111,12 @@ class EppClientSpec extends UnitSpec {
 		and: "a connection"
 			def connection = mockReadyConnection()
 			dummyClient.connection = connection
-		and: "with io connections"
-			def outgoing = Mock(OutputStream)
-			def incoming = Mock(InputStream)
-			connection.getInputStream()     >> incoming
-			connection.getOutputStream()    >> outgoing
 
 		when: "it is executed"
 			dummyClient.send(theRequest)
 
 		then:
-			1 * outgoing.write(theTestMessage.bytes)
-			1 * outgoing.flush()
-			3 * incoming.read(_, 0, 1000) >>> [0, 0, 5]
-			1 * incoming.read(_, 5, 1000) >> 5
-			1 * incoming.read(_, 10, 1000) >> 10
-			1 * incoming.read(_, 20, 1000) >> 10
-			1 * incoming.read(_, 30, 1000) >> 13
-			1 * incoming.read(_, 43, 1000) >> -1
+			// TODO add more interaction tests when implementation is better known.
 			1 * theRequest.handleResponse(_)
 
 	}
@@ -150,11 +133,9 @@ class EppClientSpec extends UnitSpec {
 	}
 
 	private def mockReadyConnection() {
-		def connection = Mock(Socket)
-		connection.isClosed()           >> false
+		def connection = Mock(SocketChannel)
+		connection.isOpen()             >> true
 		connection.isConnected()        >> true
-		connection.isInputShutdown()    >> false
-		connection.isOutputShutdown()   >> false
 		connection
 	}
 

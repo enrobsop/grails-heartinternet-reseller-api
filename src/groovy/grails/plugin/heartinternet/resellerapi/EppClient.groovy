@@ -1,6 +1,6 @@
 package grails.plugin.heartinternet.resellerapi
 
-import javax.net.ssl.SSLSocketFactory
+import java.nio.channels.SocketChannel
 
 class EppClient {
 
@@ -9,11 +9,12 @@ class EppClient {
 	def clID
 	def pw
 
-	Socket connection
+	SocketChannel connection
 
 	void connect() {
 		connection?.close()
-		connection = SSLSocketFactory.default.createSocket(host, port)
+		connection = SocketChannel.open()
+		connection.connect(new InetSocketAddress(host, port))
 	}
 
 	void closeConnection() {
@@ -23,12 +24,10 @@ class EppClient {
 
 	def getConnectionStatus() {
 		[
-			isReady:            connection && !connection.closed && connection.connected && !connection.inputShutdown && !connection.outputShutdown,
+			isReady:            connection && connection.isOpen() && connection.connected,
 			exists:             connection != null,
-			isClosed:           connection?.closed,
-			isConnected:        connection?.connected,
-			isInputShutdown:    connection?.inputShutdown,
-			isOutputShutdown:   connection?.outputShutdown
+			isOpen:             connection?.isOpen(),
+			isConnected:        connection?.connected
 		]
 	}
 
@@ -48,34 +47,15 @@ class EppClient {
 	private void sendData(message) {
 		handleConnectionNotReady()
 		println "Sending...\n$message"
-		def sout = connection.outputStream
-		sout.write(message.bytes)
-		sout.flush()
+		// TODO send message
 		println "Sending complete."
 	}
 
 	private String receiveFromStream() {
 		println "Receiving..."
-
-		final int maxBytes = 1000
-
-		def sin     = connection.inputStream
-		int mark    = 0
-		def results = []
-		int n       = 0
-
-		byte[] bytesRead = new byte[maxBytes]
-
-		while ((n = sin.read(bytesRead, mark, maxBytes)) >= 0) {
-			def str = new String(Arrays.copyOfRange(bytesRead,0,n), 'UTF-8')
-			results << str
-			mark += n
-		}
-
-		def received = results.join("").toString()
+		def received = ""
 		println "Receiving complete.\n$received"
 		received
-
 	}
 
 	private void handleConnectionNotReady() {
