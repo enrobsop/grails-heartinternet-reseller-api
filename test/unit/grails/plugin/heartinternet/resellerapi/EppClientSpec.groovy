@@ -52,6 +52,7 @@ class EppClientSpec extends UnitSpec {
 		given: "a connection"
 		def connection = exists ? Mock(Socket) : null
 		dummyClient.connection = connection
+
 		and: "connection state"
 		connection.isClosed()           >> isClosed
 		connection.isConnected()        >> isConnected
@@ -90,28 +91,6 @@ class EppClientSpec extends UnitSpec {
 
 		then:
 		thrown EppClientException
-	}
-
-	@Unroll("packing #value should give #expectedResult")
-	def "packN should work"() {
-		expect:
-		EppClient.packN(value).bytes == expectedResult as byte[]
-
-		where:
-		value   | expectedResult
-		1839    | [0,0,7,47]
-		100     | [0,0,0,100]
-		123     | [0,0,0,123]
-	}
-
-	@Unroll("unpacking #value should reverse packN")
-	def "unpackN should reverse packN"() {
-		when:
-		def packed = EppClient.packN(value)
-		then:
-		EppClient.unpackN(packed) == value
-		where:
-		value << [1839, 100, 123]
 	}
 
 }

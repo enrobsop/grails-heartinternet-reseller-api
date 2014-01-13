@@ -1,9 +1,11 @@
 package grails.plugin.heartinternet.resellerapi
+
+import grails.plugin.heartinternet.resellerapi.request.EppClientHelper
 import grails.plugin.heartinternet.resellerapi.request.LoginRequest
 
 import javax.net.ssl.SSLSocketFactory
-import java.nio.ByteBuffer
 
+@Mixin(EppClientHelper)
 class EppClient {
 
 	def host
@@ -86,20 +88,6 @@ class EppClient {
 		if (!ready) {
 			throw new EppClientException("EppClient is not ready. Has the connection been opened using EppClient.connect? Connection status=$connectionStatus", null)
 		}
-	}
-
-	static String prepareForEpp(msg) {
-		String sizeInfo = packN(msg.length() + 4)
-		"${sizeInfo}${msg}"
-	}
-
-	static String packN(int value) {
-		byte[] bytes = ByteBuffer.allocate(4).putInt(new Integer(value)).array();
-		new String(bytes, 'UTF-8')
-	}
-
-	static int unpackN(String value) {
-		ByteBuffer.wrap(value.bytes).getInt()
 	}
 
 }
