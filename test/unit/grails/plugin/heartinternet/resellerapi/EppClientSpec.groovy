@@ -10,8 +10,8 @@ class EppClientSpec extends UnitSpec {
 		dummyClient = new EppClient(
 			host:   "api.heartinternet.co.uk",
 			port:   1701,
-			clID:   "a0aa1234567aa998",
-			pw:     "+epERjmIBb"
+			clID:   "aaaaaaaaaaaaaaaa",
+			pw:     "++++++++++"
 		)
 	}
 
@@ -118,26 +118,54 @@ class EppClientSpec extends UnitSpec {
 			thrown EppClientException
 	}
 
-	def "ping returns a list of objects and extensions"() {
-		given: "a connected client"
-			dummyClient.connect()
-
-		when:
-			def response = dummyClient.ping()
+	def "connecting returns a greeting message"() {
+		when: "connecting"
+			def response = dummyClient.connect()
 			def xml = new XmlSlurper().parseText(response)
 
-		then:
+		then: "a valid xml response is received"
 			xml != null
 			xml.greeting?.svID?.text() == "Heart Internet Test EPP Service"
 	}
 
-	private def mockReadyConnection() {
-		def connection = Mock(Socket)
-		connection.isClosed()           >> false
-		connection.isConnected()        >> true
-		connection.isInputShutdown()    >> false
-		connection.isOutputShutdown()   >> false
-		connection
+
+//	<?xml version="1.0" encoding="utf-8"?>
+//	<epp xmlns="urn:ietf:params:xml:ns:epp-1.0"><response><result code="2200"><msg>Invalid clID or pw</msg></result><trID><clTRID>2b8257ac1c3d2ee9d667a252cfe23373</clTRID><svTRID>test-5258139e-818085-0</svTRID></trID></response></epp>
+
+	def "using the wrong login credentials gives an error response"() {
+		given: "a request"
+			dummyClient.connect()
+
+		when: "logging in"
+			def response = dummyClient.login()
+			def xml = new XmlSlurper().parseText(response)
+
+		then: "a login failed response is received"
+			xml != null
+			xml.response.result.@code.text()    == "2200"
+			xml.response.result.msg.text()      == "Invalid clID or pw"
+	}
+
+	@Unroll("packing #value should give #expectedResult")
+	def "packN should work"() {
+		expect:
+			EppClient.packN(value).bytes == expectedResult as byte[]
+
+		where:
+			value   | expectedResult
+			1839    | [0,0,7,47]
+			100     | [0,0,0,100]
+			123     | [0,0,0,123]
+	}
+
+	@Unroll("unpacking #value should reverse packN")
+	def "unpackN should reverse packN"() {
+		when:
+			def packed = EppClient.packN(value)
+		then:
+			EppClient.unpackN(packed) == value
+		where:
+			value << [1839, 100, 123]
 	}
 
 }

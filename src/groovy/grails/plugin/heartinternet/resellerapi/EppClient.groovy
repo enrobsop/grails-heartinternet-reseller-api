@@ -1,6 +1,8 @@
 package grails.plugin.heartinternet.resellerapi
+import grails.plugin.heartinternet.resellerapi.request.LoginRequest
 
 import javax.net.ssl.SSLSocketFactory
+import java.nio.ByteBuffer
 
 class EppClient {
 
@@ -10,15 +12,16 @@ class EppClient {
 	def pw
 
 	Socket connection
-	private BufferedReader reader
 	private PrintWriter writer
+	private InputStream inputStream
 
-	void connect() {
+	def connect() {
 		connection?.close()
 		connection  = SSLSocketFactory.default.createSocket(host, port)
-		reader      = new BufferedReader(new InputStreamReader(connection.inputStream))
-		writer      = writer = new PrintWriter(connection.outputStream, true)
+		writer      = new PrintWriter(connection.outputStream, true)
+		inputStream = connection.inputStream
 		println "Connected to: $host on port $port"
+		response
 	}
 
 	void closeConnection() {
@@ -26,9 +29,9 @@ class EppClient {
 		connection = null
 	}
 
-	def ping() {
-		sendData ""
-		getResponse()
+	def login() {
+		send(new LoginRequest(clID: clID, password: pw))
+		response
 	}
 
 	def getConnectionStatus() {
@@ -38,7 +41,8 @@ class EppClient {
 			isClosed:           connection?.closed,
 			isConnected:        connection?.connected,
 			isInputShutdown:    connection?.inputShutdown,
-			isOutputShutdown:   connection?.outputShutdown
+			isOutputShutdown:   connection?.outputShutdown,
+			writerError:        writer?.checkError()
 		]
 	}
 
@@ -46,37 +50,36 @@ class EppClient {
 		connectionStatus.isReady
 	}
 
-	def send(ApiRequest request) {
-		println "------------------------"
-		sendData(request.message)
-		println " ------"
-		def received = getResponse()
-		println "------------------------"
-		request.handleResponse(received)
+	void send(ApiRequest request) {
+		sendData request.message
 	}
 
-	private void sendData(message) {
+	void sendData(String message) {
 		handleConnectionNotReady()
-		println "Sending...\n[$message]\n$connectionStatus"
-
-		writer.println(prepareForEpp(message))
-
-		// TODO implement request sending
-		println "Sending complete.\n$connectionStatus"
+		def prepared = prepareForEpp(message)
+		println "\nSending...\n[$prepared]\n"
+		writer.println(prepared)
+		println "Sending complete."
 	}
 
-	private String getResponse() {
-		println "Receiving...\n$connectionStatus"
+	String getResponse() {
+		print "Receiving..."
 
-		def received = ""
-		def line
-		while (line = reader.readLine()) {
-			println "\tline[line[$line]]"
-			received += line
-		}
+		int dataSize = incomingBytesAvailable
+		print " $dataSize bytes... "
 
-		println "Receiving complete.\n[$received]\n$connectionStatus"
+		byte[] data = new byte[dataSize]
+		inputStream.read(data, 4, dataSize)
+		def received = new String(data, 'UTF-8')
+
+		println " complete.\n[$received]\n\n"
 		received.trim()
+	}
+
+	private int getIncomingBytesAvailable() {
+		byte[] initBytes = new byte[4]
+		inputStream.read(initBytes,0,4)
+		unpackN(new String(initBytes, 'UTF-8'))
 	}
 
 	private void handleConnectionNotReady() {
@@ -85,8 +88,18 @@ class EppClient {
 		}
 	}
 
-	private String prepareForEpp(msg) {
-		msg
+	static String prepareForEpp(msg) {
+		String sizeInfo = packN(msg.length() + 4)
+		"${sizeInfo}${msg}"
+	}
+
+	static String packN(int value) {
+		byte[] bytes = ByteBuffer.allocate(4).putInt(new Integer(value)).array();
+		new String(bytes, 'UTF-8')
+	}
+
+	static int unpackN(String value) {
+		ByteBuffer.wrap(value.bytes).getInt()
 	}
 
 }
