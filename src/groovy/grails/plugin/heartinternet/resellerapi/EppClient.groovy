@@ -1,6 +1,8 @@
 package grails.plugin.heartinternet.resellerapi
+import grails.plugin.heartinternet.resellerapi.request.LoginRequest
 
-import java.nio.channels.SocketChannel
+import javax.net.ssl.SSLSocketFactory
+import java.nio.ByteBuffer
 
 class EppClient {
 
@@ -9,12 +11,17 @@ class EppClient {
 	def clID
 	def pw
 
-	SocketChannel connection
+	Socket connection
+	private PrintWriter writer
+	private InputStream inputStream
 
-	void connect() {
+	def connect() {
 		connection?.close()
-		connection = SocketChannel.open()
-		connection.connect(new InetSocketAddress(host, port))
+		connection  = SSLSocketFactory.default.createSocket(host, port)
+		writer      = new PrintWriter(connection.outputStream, true)
+		inputStream = connection.inputStream
+		println "Connected to: $host on port $port"
+		response
 	}
 
 	void closeConnection() {
@@ -22,12 +29,20 @@ class EppClient {
 		connection = null
 	}
 
+	def login() {
+		send(new LoginRequest(clID: clID, password: pw))
+		response
+	}
+
 	def getConnectionStatus() {
 		[
-			isReady:            connection && connection.isOpen() && connection.connected,
-			exists:             connection != null,
-			isOpen:             connection?.isOpen(),
-			isConnected:        connection?.connected
+				isReady:            connection && !connection.closed && connection.connected && !connection.inputShutdown && !connection.outputShutdown,
+				exists:             connection != null,
+				isClosed:           connection?.closed,
+				isConnected:        connection?.connected,
+				isInputShutdown:    connection?.inputShutdown,
+				isOutputShutdown:   connection?.outputShutdown,
+				writerError:        writer?.checkError()
 		]
 	}
 
@@ -35,33 +50,56 @@ class EppClient {
 		connectionStatus.isReady
 	}
 
-	def send(ApiRequest request) {
-		println "------------------------"
-		sendData(request.message)
-		println " ------"
-		def received = receiveFromStream()
-		println "------------------------"
-		request.handleResponse(received)
+	void send(ApiRequest request) {
+		sendData request.message
 	}
 
-	private void sendData(message) {
+	void sendData(String message) {
 		handleConnectionNotReady()
-		println "Sending...\n$message"
-		// TODO send message
+		def prepared = prepareForEpp(message)
+		println "\nSending...\n[$prepared]\n"
+		writer.println(prepared)
 		println "Sending complete."
 	}
 
-	private String receiveFromStream() {
-		println "Receiving..."
-		def received = ""
-		println "Receiving complete.\n$received"
-		received
+	String getResponse() {
+		print "Receiving..."
+
+		int dataSize = incomingBytesAvailable
+		print " $dataSize bytes... "
+
+		byte[] data = new byte[dataSize]
+		inputStream.read(data, 4, dataSize)
+		def received = new String(data, 'UTF-8')
+
+		println " complete.\n[$received]\n\n"
+		received.trim()
+	}
+
+	private int getIncomingBytesAvailable() {
+		byte[] initBytes = new byte[4]
+		inputStream.read(initBytes,0,4)
+		unpackN(new String(initBytes, 'UTF-8'))
 	}
 
 	private void handleConnectionNotReady() {
 		if (!ready) {
 			throw new EppClientException("EppClient is not ready. Has the connection been opened using EppClient.connect? Connection status=$connectionStatus", null)
 		}
+	}
+
+	static String prepareForEpp(msg) {
+		String sizeInfo = packN(msg.length() + 4)
+		"${sizeInfo}${msg}"
+	}
+
+	static String packN(int value) {
+		byte[] bytes = ByteBuffer.allocate(4).putInt(new Integer(value)).array();
+		new String(bytes, 'UTF-8')
+	}
+
+	static int unpackN(String value) {
+		ByteBuffer.wrap(value.bytes).getInt()
 	}
 
 }
