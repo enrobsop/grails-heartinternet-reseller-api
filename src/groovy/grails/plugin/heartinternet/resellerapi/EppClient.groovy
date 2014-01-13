@@ -40,7 +40,7 @@ class EppClient {
 		println "------------------------"
 		sendData(request.message)
 		println " ------"
-		def received = receiveFromStream()
+		def received = getResponse()
 		println "------------------------"
 		request.handleResponse(received)
 	}
@@ -48,31 +48,14 @@ class EppClient {
 	private void sendData(message) {
 		handleConnectionNotReady()
 		println "Sending...\n$message"
-		def sout = connection.outputStream
-		sout.write(message.bytes)
-		sout.flush()
+		// TODO implement request sending
 		println "Sending complete."
 	}
 
-	private String receiveFromStream() {
+	private String getResponse() {
 		println "Receiving..."
-
-		final int maxBytes = 1000
-
-		def sin     = connection.inputStream
-		int mark    = 0
-		def results = []
-		int n       = 0
-
-		byte[] bytesRead = new byte[maxBytes]
-
-		while ((n = sin.read(bytesRead, mark, maxBytes)) >= 0) {
-			def str = new String(Arrays.copyOfRange(bytesRead,0,n), 'UTF-8')
-			results << str
-			mark += n
-		}
-
-		def received = results.join("").toString()
+		// TODO implement response reading.
+		def received = ""
 		println "Receiving complete.\n$received"
 		received
 

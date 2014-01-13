@@ -126,14 +126,6 @@ class EppClientSpec extends UnitSpec {
 			dummyClient.send(theRequest)
 
 		then:
-			1 * outgoing.write(theTestMessage.bytes)
-			1 * outgoing.flush()
-			3 * incoming.read(_, 0, 1000) >>> [0, 0, 5]
-			1 * incoming.read(_, 5, 1000) >> 5
-			1 * incoming.read(_, 10, 1000) >> 10
-			1 * incoming.read(_, 20, 1000) >> 10
-			1 * incoming.read(_, 30, 1000) >> 13
-			1 * incoming.read(_, 43, 1000) >> -1
 			1 * theRequest.handleResponse(_)
 
 	}
