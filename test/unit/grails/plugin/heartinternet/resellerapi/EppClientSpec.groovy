@@ -107,29 +107,6 @@ class EppClientSpec extends UnitSpec {
 
 	}
 
-	def "a request is executed correctly"() {
-
-		given: "a request"
-			def theRequest      = Mock(ApiRequest)
-			def theTestMessage  = "<test>mymessage</test>"
-			theRequest.getMessage() >> theTestMessage
-		and: "a connection"
-			def connection = mockReadyConnection()
-			dummyClient.connection = connection
-		and: "with io connections"
-			def outgoing = Mock(OutputStream)
-			def incoming = Mock(InputStream)
-			connection.getInputStream()     >> incoming
-			connection.getOutputStream()    >> outgoing
-
-		when: "it is executed"
-			dummyClient.send(theRequest)
-
-		then:
-			1 * theRequest.handleResponse(_)
-
-	}
-
 	def "attempting to send while the connection is not ready should result in an exception"() {
 		given: "a request"
 			def theRequest = Mock(ApiRequest)
@@ -139,6 +116,19 @@ class EppClientSpec extends UnitSpec {
 
 		then:
 			thrown EppClientException
+	}
+
+	def "ping returns a list of objects and extensions"() {
+		given: "a connected client"
+			dummyClient.connect()
+
+		when:
+			def response = dummyClient.ping()
+			def xml = new XmlSlurper().parseText(response)
+
+		then:
+			xml != null
+			xml.greeting?.svID?.text() == "Heart Internet Test EPP Service"
 	}
 
 	private def mockReadyConnection() {
