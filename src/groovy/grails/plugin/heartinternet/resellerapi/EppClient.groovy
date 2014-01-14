@@ -59,8 +59,9 @@ class EppClient {
 	void sendData(String message) {
 		handleConnectionNotReady()
 		def prepared = prepareForEpp(message)
-		println "\nSending...\n[$prepared]\n"
-		writer.println(prepared)
+		print "\nSending...${prepared.length() -4}bytes...\n[$prepared]\n"
+		writer.print(prepared)
+		writer.flush()
 		println "Sending complete."
 	}
 
@@ -70,12 +71,16 @@ class EppClient {
 		int dataSize = incomingBytesAvailable
 		print " $dataSize bytes... "
 
-		byte[] data = new byte[dataSize]
-		inputStream.read(data, 4, dataSize)
-		def received = new String(data, 'UTF-8')
+		def received = receive(dataSize)
 
 		println " complete.\n[$received]\n\n"
 		received.trim()
+	}
+
+	private String receive(int dataSize) {
+		byte[] data = new byte[dataSize]
+		inputStream.read(data, 0, dataSize)
+		new String(data, 'UTF-8')
 	}
 
 	private int getIncomingBytesAvailable() {
