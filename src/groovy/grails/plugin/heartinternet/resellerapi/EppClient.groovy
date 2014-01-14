@@ -1,6 +1,5 @@
 package grails.plugin.heartinternet.resellerapi
 
-import grails.plugin.heartinternet.resellerapi.request.EppClientHelper
 import grails.plugin.heartinternet.resellerapi.request.LoginRequest
 
 import javax.net.ssl.SSLSocketFactory

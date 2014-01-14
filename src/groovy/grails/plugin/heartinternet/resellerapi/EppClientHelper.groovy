@@ -1,4 +1,4 @@
-package grails.plugin.heartinternet.resellerapi.request
+package grails.plugin.heartinternet.resellerapi
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 

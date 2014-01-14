@@ -3,8 +3,8 @@ package grails.plugin.heartinternet.resellerapi
 import grails.plugin.spock.UnitSpec
 import spock.lang.Unroll
 
-import static grails.plugin.heartinternet.resellerapi.request.EppClientHelper.packN
-import static grails.plugin.heartinternet.resellerapi.request.EppClientHelper.unpackN
+import static EppClientHelper.packN
+import static EppClientHelper.unpackN
 
 class EppClientHelperSpec extends UnitSpec {
 
