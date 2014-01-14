@@ -1,6 +1,6 @@
 package grails.plugin.heartinternet.resellerapi.request
-
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 class EppClientHelper {
 
@@ -9,13 +9,25 @@ class EppClientHelper {
 		"${sizeInfo}${msg}"
 	}
 
+	static def toPositiveByteArray(bytes) {
+		bytes.collect {
+			it < 0 ? 256 + it : it
+		}
+	}
+
 	static String packN(int value) {
-		byte[] bytes = ByteBuffer.allocate(4).putInt(new Integer(value)).array();
-		new String(bytes, 'UTF-8')
+		def bytes = ByteBuffer.allocate(4).putInt(value).array()
+		bytes = toPositiveByteArray(bytes)
+		(bytes as char[]).toString()
 	}
 
 	static int unpackN(String value) {
-		ByteBuffer.wrap(value.bytes).getInt()
+		def bytes = (value.chars as int[]) as byte[]
+		ByteBuffer buf = ByteBuffer.allocate(4)
+		buf.order(ByteOrder.BIG_ENDIAN)
+		buf.put(bytes)
+		buf.flip()
+		buf.getInt()
 	}
 
 }

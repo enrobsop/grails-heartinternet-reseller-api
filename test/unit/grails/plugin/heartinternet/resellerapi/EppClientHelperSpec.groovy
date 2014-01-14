@@ -1,31 +1,37 @@
 package grails.plugin.heartinternet.resellerapi
 
-import grails.plugin.heartinternet.resellerapi.request.EppClientHelper
 import grails.plugin.spock.UnitSpec
 import spock.lang.Unroll
+
+import static grails.plugin.heartinternet.resellerapi.request.EppClientHelper.packN
+import static grails.plugin.heartinternet.resellerapi.request.EppClientHelper.unpackN
 
 class EppClientHelperSpec extends UnitSpec {
 
 	@Unroll("packing #value should give #expectedResult")
 	def "packN should work"() {
-		expect:
-		EppClientHelper.packN(value).bytes == expectedResult as byte[]
+
+		expect: packN(value) == expectedResult
 
 		where:
 		value   | expectedResult
-		1839    | [0,0,7,47]
-		100     | [0,0,0,100]
-		123     | [0,0,0,123]
+		100     | "\u0000\u0000\u0000d"
+		123     | "\u0000\u0000\u0000{"
+		1839    | "\u0000\u0000\u0007/"
+		4862    | "\u0000\u0000\u0012\u00FE"
+
 	}
 
-	@Unroll("unpacking #value should reverse packN")
-	def "unpackN should reverse packN"() {
-		when:
-		def packed = EppClientHelper.packN(value)
-		then:
-		EppClientHelper.unpackN(packed) == value
+	@Unroll("unpacking #value should give #expectedInt")
+	def "unpacking works correctly"() {
+
+		expect: unpackN(value) == expectedInt
+
 		where:
-		value << [1839, 100, 123]
+		value                       | expectedInt
+		"\u0000\u0000\u0012\u00FE"  | 4862
+		"\u0000\u0000\u0000{"       | 123
+
 	}
 
 }
