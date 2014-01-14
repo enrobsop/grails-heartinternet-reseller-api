@@ -16,14 +16,16 @@ class EppClient {
 	Socket connection
 	private PrintWriter writer
 	private InputStream inputStream
+	private String lastResponse
 
-	def connect() {
+	EppClient connect() {
 		connection?.close()
 		connection  = SSLSocketFactory.default.createSocket(host, port)
 		writer      = new PrintWriter(connection.outputStream, true)
 		inputStream = connection.inputStream
 		println "Connected to: $host on port $port"
-		response
+		lastResponse = readResponse()
+		this
 	}
 
 	void closeConnection() {
@@ -31,9 +33,13 @@ class EppClient {
 		connection = null
 	}
 
-	def login() {
+	EppClient login() {
 		send(new LoginRequest(clID: clID, password: pw))
-		response
+		this
+	}
+
+	String getResponse() {
+		lastResponse
 	}
 
 	def getConnectionStatus() {
@@ -52,20 +58,23 @@ class EppClient {
 		connectionStatus.isReady
 	}
 
-	void send(ApiRequest request) {
+	EppClient send(ApiRequest request) {
 		sendData request.message
+		this
 	}
 
-	void sendData(String message) {
+	EppClient sendData(String message) {
 		handleConnectionNotReady()
 		def prepared = prepareForEpp(message)
 		print "\nSending...${prepared.length() -4}bytes...\n[$prepared]\n"
 		writer.print(prepared)
 		writer.flush()
 		println "Sending complete."
+		lastResponse = readResponse()
+		this
 	}
 
-	String getResponse() {
+	String readResponse() {
 		print "Receiving..."
 
 		int dataSize = incomingBytesAvailable

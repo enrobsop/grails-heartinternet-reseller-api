@@ -1,8 +1,9 @@
 package resellerapi
-import grails.plugin.heartinternet.resellerapi.EppClient
-import grails.plugin.spock.IntegrationSpec
 
-class EppClientIntegrationSpec extends IntegrationSpec {
+import grails.plugin.heartinternet.resellerapi.EppClient
+import grails.plugin.spock.UnitSpec
+
+class EppClientIntegrationSpec extends UnitSpec {
 
 	def dummyClient
 
@@ -44,7 +45,7 @@ class EppClientIntegrationSpec extends IntegrationSpec {
 
 	def "connecting returns a greeting message"() {
 		when: "connecting"
-		def response = dummyClient.connect()
+		def response = dummyClient.connect().response
 		def xml = new XmlSlurper().parseText(response)
 
 		then: "a valid xml response is received"
@@ -53,11 +54,8 @@ class EppClientIntegrationSpec extends IntegrationSpec {
 	}
 
 	def "using the wrong login credentials gives an error response"() {
-		given: "a request"
-		dummyClient.connect()
-
 		when: "logging in"
-		def response = dummyClient.login()
+		def response = dummyClient.connect().login().response
 		def xml = new XmlSlurper().parseText(response)
 
 		then: "a login failed response is received"
