@@ -1,5 +1,6 @@
 package grails.plugin.heartinternet.resellerapi
 
+import grails.plugin.heartinternet.resellerapi.request.ListDomainsRequest
 import grails.plugin.heartinternet.resellerapi.request.ListPackagesRequest
 
 class HeartInternetService {
@@ -20,6 +21,20 @@ class HeartInternetService {
 
 		def xml = resellerEppClient.responseAsXml
 		xml.epp.response.result.@code.text() == 1000
+	}
+
+	def listDomains() {
+		def request = new ListDomainsRequest()
+		def xml = resellerEppClient.send(request).responseAsXml
+		xml = xml.declareNamespace('ext-domain': "http://www.heartinternet.co.uk/whapi/ext-domain-2.0")
+
+		def domains = xml.response.resData.'ext-domain:lstData'.'ext-domain:domainInfo'
+		domains.collect {
+			new HeartDomain(
+				name:       it.text(),
+				isHosted:   it.@hosted.text() == "1"
+			)
+		}
 	}
 
 	def listPackages() {

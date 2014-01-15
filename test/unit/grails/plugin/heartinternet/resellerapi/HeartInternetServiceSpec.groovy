@@ -1,5 +1,6 @@
 package grails.plugin.heartinternet.resellerapi
 
+import grails.plugin.heartinternet.resellerapi.request.ListDomainsRequest
 import grails.plugin.heartinternet.resellerapi.request.ListPackagesRequest
 import grails.plugin.spock.UnitSpec
 import grails.test.mixin.TestFor
@@ -7,11 +8,30 @@ import grails.test.mixin.TestFor
 @TestFor(HeartInternetService)
 class HeartInternetServiceSpec extends UnitSpec {
 
-	void "getting a list of packages works"() {
+	def api
 
-		given: "an API client"
-		def api = Mock(EppClient)
+	def setup() {
+		api = Mock(EppClient)
 		service.resellerEppClient = api
+	}
+
+	void "getting a list of domains works"() {
+
+		when: "getting the list of domains"
+		def result = service.listDomains()
+
+		then: "the correct calls are made"
+		1 * api.send(_ as ListDomainsRequest) >> api
+		1 * api.getResponseAsXml() >> LIST_DOMAINS_XML
+
+		and: "the correct results are returned"
+		result.size()       == 2
+		result*.name        == ['foo.example.org','bez.example.org']
+		result.isHosted     == [true, false]
+
+	}
+
+	void "getting a list of packages works"() {
 
 		when: "getting the list of pacakges"
 		def result = service.listPackages()
@@ -25,9 +45,28 @@ class HeartInternetServiceSpec extends UnitSpec {
 		result*.heartId     == ['3e50664779a66336','bb00181b84305c57','308142b49153f743']
 		result*.domainName  == ['foo.example.org','bar.example.org','boo.example.org']
 
-
 	}
 
+	static final def LIST_DOMAINS_XML = new XmlSlurper().parseText("""
+<?xml version='1.0'?>
+<epp xmlns="urn:ietf:params:xml:ns:epp-1.0" xmlns:ext-domain="http://www.heartinternet.co.uk/whapi/ext-domain-2.0" xmlns:domain="urn:ietf:params:xml:ns:domain-1.0">
+  <response>
+    <result code='1000'>
+      <msg>Command completed successfully</msg>
+    </result>
+    <resData>
+      <ext-domain:lstData>
+        <ext-domain:domainInfo hosted='1'>foo.example.org</ext-domain:domainInfo>
+        <ext-domain:domainInfo>bez.example.org</ext-domain:domainInfo>
+      </ext-domain:lstData>
+    </resData>
+    <trID>
+      <clTRID>cff2cad609661333bad93296ecdd60c7</clTRID>
+      <svTRID>test-e52f4ce3fbf33ba0d5802769f073108c</svTRID>
+    </trID>
+  </response>
+</epp>
+""".trim())
 
 	static final def LIST_PACKAGES_XML = new XmlSlurper().parseText("""
 <?xml version='1.0'?>

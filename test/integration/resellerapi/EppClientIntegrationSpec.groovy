@@ -1,6 +1,7 @@
 package resellerapi
 
 import grails.plugin.heartinternet.resellerapi.EppClient
+import grails.plugin.heartinternet.resellerapi.request.ListDomainsRequest
 import grails.plugin.spock.UnitSpec
 
 class EppClientIntegrationSpec extends UnitSpec {
@@ -45,8 +46,7 @@ class EppClientIntegrationSpec extends UnitSpec {
 
 	def "connecting returns a greeting message"() {
 		when: "connecting"
-		def response = dummyClient.connect().response
-		def xml = new XmlSlurper().parseText(response)
+		def xml = dummyClient.connect().responseAsXml
 
 		then: "a valid xml response is received"
 		xml != null
@@ -55,13 +55,25 @@ class EppClientIntegrationSpec extends UnitSpec {
 
 	def "using the wrong login credentials gives an error response"() {
 		when: "logging in"
-		def response = dummyClient.connect().login().response
-		def xml = new XmlSlurper().parseText(response)
+		def xml = dummyClient.connect().login().responseAsXml
 
 		then: "a login failed response is received"
 		xml != null
 		xml.response.result.@code.text()    == "2200"
 		xml.response.result.msg.text()      == "Invalid clID or pw"
+	}
+
+	def "listing domains should return a response even when not logged in"() {
+		given: "client is connected but not logged in"
+		dummyClient.connect()
+
+		when: "requesting the list of domains"
+		def xml = dummyClient.send(new ListDomainsRequest()).responseAsXml
+
+		then:
+		xml != null
+		xml.response.result.@code.text()        == "2101"
+		xml.response.result.msg.text().contains("check your login")
 	}
 
 }
