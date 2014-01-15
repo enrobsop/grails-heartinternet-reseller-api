@@ -15,10 +15,5 @@ class ListPackagesRequest implements ApiRequest {
 """.trim()
 	}
 
-	@Override
-	def handleResponse(Object text) {
-		return null
-	}
-
 }
 

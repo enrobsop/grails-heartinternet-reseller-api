@@ -4,6 +4,4 @@ interface ApiRequest {
 
 	String getMessage()
 
-	def handleResponse(text)
-
 }

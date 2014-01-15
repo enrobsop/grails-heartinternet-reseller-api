@@ -54,10 +54,5 @@ class LoginRequest implements ApiRequest {
 		request.toFlattenedString()
 	}
 
-	@Override
-	def handleResponse(Object text) {
-		return null
-	}
-
 }
 
