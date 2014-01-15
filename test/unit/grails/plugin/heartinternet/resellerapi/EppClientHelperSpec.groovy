@@ -18,7 +18,8 @@ class EppClientHelperSpec extends UnitSpec {
 		100     | "\u0000\u0000\u0000d"
 		123     | "\u0000\u0000\u0000{"
 		1839    | "\u0000\u0000\u0007/"
-		4862    | "\u0000\u0000\u0012\u00FE"
+		1886    | "\u0000\u0000\u0007\u005E"
+		4862    | "\u0000\u0012\u00FE"
 
 	}
 
@@ -30,7 +31,19 @@ class EppClientHelperSpec extends UnitSpec {
 		where:
 		value                       | expectedInt
 		"\u0000\u0000\u0012\u00FE"  | 4862
+		"\u0000\u0012\u00FE"        | 4862
 		"\u0000\u0000\u0000{"       | 123
+
+	}
+
+	@Unroll("packN should return 4 bytes when n=#n")
+	def "packN should always return 4 bytes"() {
+
+		expect:
+			packN(n).getBytes("UTF-8").length == 4
+
+		where:
+			n << [100, 150, 395, 296, 4862]
 
 	}
 
