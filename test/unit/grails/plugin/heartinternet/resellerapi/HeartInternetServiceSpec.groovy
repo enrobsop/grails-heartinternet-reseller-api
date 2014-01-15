@@ -2,6 +2,7 @@ package grails.plugin.heartinternet.resellerapi
 
 import grails.plugin.heartinternet.resellerapi.request.ListDomainsRequest
 import grails.plugin.heartinternet.resellerapi.request.ListPackagesRequest
+import grails.plugin.heartinternet.resellerapi.request.LogoutRequest
 import grails.plugin.spock.UnitSpec
 import grails.test.mixin.TestFor
 
@@ -13,6 +14,17 @@ class HeartInternetServiceSpec extends UnitSpec {
 	def setup() {
 		api = Mock(EppClient)
 		service.eppClient = api
+	}
+
+	void "logging out works"() {
+
+		when: "logging out"
+		def result = service.logout()
+
+		then: "the correct calss are made"
+		1 * api.send(_ as LogoutRequest) >> api
+		1 * api.getResponseAsXml() >> LOGOUT_XML
+
 	}
 
 	void "getting a list of domains works"() {
@@ -46,6 +58,21 @@ class HeartInternetServiceSpec extends UnitSpec {
 		result*.domainName  == ['foo.example.org','bar.example.org','boo.example.org']
 
 	}
+
+	static final def LOGOUT_XML = new XmlSlurper().parseText("""
+<?xml version='1.0'?>
+<epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
+  <response>
+    <result code='1500'>
+      <msg>Command completed successfully</msg>
+    </result>
+    <trID>
+      <clTRID>90908b2caabbb97c1e79899816efc093</clTRID>
+      <svTRID>test-673076c2a80828e53c296681f29b5eaf</svTRID>
+    </trID>
+  </response>
+</epp>
+""".trim())
 
 	static final def LIST_DOMAINS_XML = new XmlSlurper().parseText("""
 <?xml version='1.0'?>

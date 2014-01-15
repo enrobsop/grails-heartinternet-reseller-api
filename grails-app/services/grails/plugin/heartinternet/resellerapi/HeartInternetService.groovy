@@ -2,6 +2,7 @@ package grails.plugin.heartinternet.resellerapi
 
 import grails.plugin.heartinternet.resellerapi.request.ListDomainsRequest
 import grails.plugin.heartinternet.resellerapi.request.ListPackagesRequest
+import grails.plugin.heartinternet.resellerapi.request.LogoutRequest
 
 class HeartInternetService {
 
@@ -21,6 +22,11 @@ class HeartInternetService {
 
 		def xml = eppClient.responseAsXml
 		xml.epp.response.result.@code.text() == 1000
+	}
+
+	boolean logout() {
+		def xml = eppClient.send(new LogoutRequest()).responseAsXml
+		xml.epp.response.result.@code.text() == 1500
 	}
 
 	def listDomains() {

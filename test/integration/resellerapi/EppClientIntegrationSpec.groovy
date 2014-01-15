@@ -2,6 +2,7 @@ package resellerapi
 
 import grails.plugin.heartinternet.resellerapi.EppClient
 import grails.plugin.heartinternet.resellerapi.request.ListDomainsRequest
+import grails.plugin.heartinternet.resellerapi.request.LogoutRequest
 import grails.plugin.spock.UnitSpec
 
 class EppClientIntegrationSpec extends UnitSpec {
@@ -63,7 +64,7 @@ class EppClientIntegrationSpec extends UnitSpec {
 		xml.response.result.msg.text()      == "Invalid clID or pw"
 	}
 
-	def "listing domains should return a response even when not logged in"() {
+	def "listing domains should return a response"() {
 		given: "client is connected but not logged in"
 		dummyClient.connect()
 
@@ -72,8 +73,21 @@ class EppClientIntegrationSpec extends UnitSpec {
 
 		then:
 		xml != null
-		xml.response.result.@code.text()        == "2101"
+		xml.response.result.@code.text() == "2101"
 		xml.response.result.msg.text().contains("check your login")
+	}
+
+	def "logging out returns a response"() {
+		given: "client is connected but not logged in"
+		dummyClient.connect()
+
+		when: "a logout request is sent"
+		def xml = dummyClient.send(new LogoutRequest()).responseAsXml
+
+		then: "a response is received"
+		xml != null
+		xml.response.result.@code.text()    == "1500"
+		xml.response.result.msg.text()      == "Logging you out"
 	}
 
 }
