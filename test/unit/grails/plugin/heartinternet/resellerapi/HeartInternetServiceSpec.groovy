@@ -12,7 +12,7 @@ class HeartInternetServiceSpec extends UnitSpec {
 
 	def setup() {
 		api = Mock(EppClient)
-		service.resellerEppClient = api
+		service.eppClient = api
 	}
 
 	void "getting a list of domains works"() {
