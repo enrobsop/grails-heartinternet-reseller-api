@@ -1,8 +1,10 @@
 package grails.plugin.heartinternet.resellerapi
-
 import grails.plugin.heartinternet.resellerapi.request.ListDomainsRequest
+import grails.plugin.heartinternet.resellerapi.request.ListInvoicesRequest
 import grails.plugin.heartinternet.resellerapi.request.ListPackagesRequest
 import grails.plugin.heartinternet.resellerapi.request.LogoutRequest
+
+import java.text.SimpleDateFormat
 
 class HeartInternetService {
 
@@ -51,6 +53,23 @@ class HeartInternetService {
 			new HeartPackage(
 				heartId:    it.'ext-package:id'.text(),
 				domainName: it.'ext-package:domainName'.text()
+			)
+		}
+	}
+
+	def listInvoices() {
+		def xml = send(new ListInvoicesRequest())
+		xml = xml.declareNamespace('ext-billing':"http://www.heartinternet.co.uk/whapi/ext-billing-2.0")
+
+		def dateFmt = new SimpleDateFormat("yyyy-MM-dd")
+		def invoices = xml.response.resData.'ext-billing:lstData'.'ext-billing:invoice'
+		invoices.collect {
+			def price = it.'ext-billing:price'
+			new HeartInvoice(
+				heartId:        it.@id.text(),
+				dateOrdered:    dateFmt.parse(it.@dateOrdered.text()),
+				priceExVat:     Float.parseFloat(price.@exVAT.text()),
+				priceIncVat:    Float.parseFloat(price.@incVAT.text())
 			)
 		}
 	}

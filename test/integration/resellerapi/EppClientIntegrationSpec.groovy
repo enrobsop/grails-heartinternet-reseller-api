@@ -1,7 +1,8 @@
 package resellerapi
-
 import grails.plugin.heartinternet.resellerapi.EppClient
+import grails.plugin.heartinternet.resellerapi.XmlResponseHelper
 import grails.plugin.heartinternet.resellerapi.request.ListDomainsRequest
+import grails.plugin.heartinternet.resellerapi.request.ListInvoicesRequest
 import grails.plugin.heartinternet.resellerapi.request.LogoutRequest
 import grails.plugin.spock.UnitSpec
 
@@ -88,6 +89,25 @@ class EppClientIntegrationSpec extends UnitSpec {
 		xml != null
 		xml.response.result.@code.text()    == "1500"
 		xml.response.result.msg.text()      == "Logging you out"
+	}
+
+	def "listing invoices returns a response"() {
+		given: "client is connected but not logged in"
+		dummyClient.connect()
+
+		when: "a list invoices request is sent"
+		def xml = dummyClient.send(new ListInvoicesRequest()).responseAsXml
+
+		then: "a response is received"
+		xml != null
+		assertIsCheckYourLogin(xml)
+	}
+
+	private void assertIsCheckYourLogin(xml) {
+		assert xml != null
+		def result = XmlResponseHelper.getResult(xml)
+		assert result.code == 2101
+		assert result.msg.contains("check your login")
 	}
 
 }
