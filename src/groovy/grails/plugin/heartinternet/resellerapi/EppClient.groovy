@@ -4,6 +4,9 @@ import grails.plugin.heartinternet.resellerapi.request.LoginRequest
 
 import javax.net.ssl.SSLSocketFactory
 
+import static grails.plugin.heartinternet.resellerapi.EppClientHelper.prepareForEpp
+import static grails.plugin.heartinternet.resellerapi.EppClientHelper.unpackN
+
 @Mixin(EppClientHelper)
 class EppClient {
 
@@ -41,6 +44,10 @@ class EppClient {
 		lastResponse
 	}
 
+	def getResponseAsXml() {
+		new XmlSlurper().parseText(response?.trim())
+	}
+
 	def getConnectionStatus() {
 		[
 				isReady:            connection && !connection.closed && connection.connected && !connection.inputShutdown && !connection.outputShutdown,
@@ -73,7 +80,7 @@ class EppClient {
 		this
 	}
 
-	String readResponse() {
+	private String readResponse() {
 		print "Receiving..."
 
 		int dataSize = incomingBytesAvailable
