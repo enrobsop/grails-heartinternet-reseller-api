@@ -60,9 +60,7 @@ class EppClientIntegrationSpec extends UnitSpec {
 		def xml = dummyClient.connect().login().responseAsXml
 
 		then: "a login failed response is received"
-		xml != null
-		xml.response.result.@code.text()    == "2200"
-		xml.response.result.msg.text()      == "Invalid clID or pw"
+		assertResult xml, 2200, "Invalid clID or pw"
 	}
 
 	def "listing domains should return a response"() {
@@ -70,12 +68,10 @@ class EppClientIntegrationSpec extends UnitSpec {
 		dummyClient.connect()
 
 		when: "requesting the list of domains"
-		def xml = dummyClient.send(new ListDomainsRequest()).responseAsXml
+		def xml = send(new ListDomainsRequest())
 
 		then:
-		xml != null
-		xml.response.result.@code.text() == "2101"
-		xml.response.result.msg.text().contains("check your login")
+		assertIsCheckYourLogin xml
 	}
 
 	def "logging out returns a response"() {
@@ -83,12 +79,10 @@ class EppClientIntegrationSpec extends UnitSpec {
 		dummyClient.connect()
 
 		when: "a logout request is sent"
-		def xml = dummyClient.send(new LogoutRequest()).responseAsXml
+		def xml = send(new LogoutRequest())
 
 		then: "a response is received"
-		xml != null
-		xml.response.result.@code.text()    == "1500"
-		xml.response.result.msg.text()      == "Logging you out"
+		assertResult xml, 1500, "Logging you out"
 	}
 
 	def "listing invoices returns a response"() {
@@ -96,11 +90,14 @@ class EppClientIntegrationSpec extends UnitSpec {
 		dummyClient.connect()
 
 		when: "a list invoices request is sent"
-		def xml = dummyClient.send(new ListInvoicesRequest()).responseAsXml
+		def xml = send(new ListInvoicesRequest())
 
 		then: "a response is received"
-		xml != null
-		assertIsCheckYourLogin(xml)
+		assertIsCheckYourLogin xml
+	}
+
+	private def send(request) {
+		dummyClient.send(request).responseAsXml
 	}
 
 	private void assertIsCheckYourLogin(xml) {
@@ -108,6 +105,13 @@ class EppClientIntegrationSpec extends UnitSpec {
 		def result = XmlResponseHelper.getResult(xml)
 		assert result.code == 2101
 		assert result.msg.contains("check your login")
+	}
+
+	private void assertResult(xml, expectedCode, expectedMsg) {
+		assert xml != null
+		def result = XmlResponseHelper.getResult(xml)
+		assert result.code  == expectedCode
+		assert result.msg   == expectedMsg
 	}
 
 }

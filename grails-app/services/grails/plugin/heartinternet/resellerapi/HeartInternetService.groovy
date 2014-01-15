@@ -79,7 +79,7 @@ class HeartInternetService {
 	}
 
 	private int getResultCode(xml) {
-		Integer.parseInt(xml.response?.result?.@code?.text())
+		XmlResponseHelper.getResult(xml).code
 	}
 
 }
