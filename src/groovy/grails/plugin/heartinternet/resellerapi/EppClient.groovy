@@ -45,7 +45,7 @@ class EppClient {
 	}
 
 	def getResponseAsXml() {
-		new XmlSlurper().parseText(response?.trim())
+		response ? new XmlSlurper().parseText(response?.trim()) : null
 	}
 
 	def getConnectionStatus() {
