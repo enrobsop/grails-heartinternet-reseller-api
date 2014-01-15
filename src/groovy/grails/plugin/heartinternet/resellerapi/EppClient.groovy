@@ -45,7 +45,9 @@ class EppClient {
 	}
 
 	def getResponseAsXml() {
-		response ? new XmlSlurper().parseText(response?.trim()) : null
+		def flattened = XmlResponseHelper.flatten(response)
+		println "Flattening response: raw:${response.length()} chars, flattened:${flattened.length()} chars"
+		response ? new XmlSlurper().parseText(flattened) : null
 	}
 
 	def getConnectionStatus() {
@@ -87,8 +89,9 @@ class EppClient {
 		print " $dataSize bytes... "
 
 		def received = receive(dataSize)
+		received = ensureXmlIsComplete(received)
 
-		println " complete.\n[$received]\n\n"
+		println " complete. [${received.bytes.length} bytes, ${received.length()} chars]\n[$received]\n\n"
 		received.trim()
 	}
 
@@ -102,6 +105,16 @@ class EppClient {
 		byte[] initBytes = new byte[4]
 		inputStream.read(initBytes,0,4)
 		unpackN(new String(initBytes, 'UTF-8'))
+	}
+
+	// The list invoices response contains ~50% invisible chars so the end of xml is not read.
+	// This method carries on reading until the XML is closed.
+	private String ensureXmlIsComplete(received) {
+		def b
+		while (!received.contains("</epp>") && (b = inputStream.read()) != -1) {
+			received += new String([b] as byte[], "UTF-8")
+		}
+		received
 	}
 
 	private void handleConnectionNotReady() {

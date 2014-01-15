@@ -17,8 +17,7 @@ class XmlRequest {
 	}
 
 	String toFlattenedString() {
-		def flattened = toString().replaceAll(/>\s+</,"><")
-		flattened.replaceAll("[\n\t]","").trim()
+		XmlResponseHelper.flatten(toString())
 	}
 
 }

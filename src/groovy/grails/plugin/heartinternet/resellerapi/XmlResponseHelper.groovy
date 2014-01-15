@@ -18,4 +18,10 @@ class XmlResponseHelper {
 		]
 	}
 
+	static String flatten(str) {
+		def flattened = str.replaceAll(/[^\d\w: <>\-\.\?\/'"=+_;,~@*&\^%]/,"")
+		flattened = flattened.trim().replaceAll(/>\s+</,"><")
+		flattened.replaceAll("[\n\t]","").trim()
+	}
+
 }
