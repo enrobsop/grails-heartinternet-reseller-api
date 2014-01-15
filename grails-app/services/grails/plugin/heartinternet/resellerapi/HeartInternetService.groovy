@@ -28,6 +28,7 @@ class HeartInternetService {
 
 	boolean logout() {
 		def xml = send(new LogoutRequest())
+		eppClient = null
 		getResultCode(xml) == 1500
 	}
 

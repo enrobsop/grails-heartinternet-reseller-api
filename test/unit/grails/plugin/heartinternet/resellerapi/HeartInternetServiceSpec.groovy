@@ -30,8 +30,11 @@ class HeartInternetServiceSpec extends UnitSpec {
 		1 * api.send(_ as LogoutRequest) >> api
 		1 * api.getResponseAsXml() >> LOGOUT_XML
 
-		and: "the correct results is given"
+		and: "the correct result is given"
 		result == true
+
+		and: "the service is cleaned up"
+		service.eppClient == null
 
 	}
 
