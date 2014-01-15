@@ -21,9 +21,12 @@ class HeartInternetServiceSpec extends UnitSpec {
 		when: "logging out"
 		def result = service.logout()
 
-		then: "the correct calss are made"
+		then: "the correct calls are made"
 		1 * api.send(_ as LogoutRequest) >> api
 		1 * api.getResponseAsXml() >> LOGOUT_XML
+
+		and: "the correct results is given"
+		result == true
 
 	}
 
