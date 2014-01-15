@@ -103,8 +103,16 @@ class EppClient {
 
 	private int getIncomingBytesAvailable() {
 		byte[] initBytes = new byte[4]
-		inputStream.read(initBytes,0,4)
-		unpackN(new String(initBytes, 'UTF-8'))
+		def size = 0
+		while (incomingSizeIsUnrealisticOrZero(size)) {
+			inputStream.read(initBytes,0,4)
+			size = unpackN(new String(initBytes, 'UTF-8'))
+		}
+		size
+	}
+
+	private boolean incomingSizeIsUnrealisticOrZero(n) {
+		n == 0 || n > 1000000
 	}
 
 	// The list invoices response contains ~50% invisible chars so the end of xml is not read.
