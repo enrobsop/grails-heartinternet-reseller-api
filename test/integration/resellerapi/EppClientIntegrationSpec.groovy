@@ -1,11 +1,10 @@
 package resellerapi
+
 import grails.plugin.heartinternet.resellerapi.EppClient
 import grails.plugin.heartinternet.resellerapi.XmlResponseHelper
-import grails.plugin.heartinternet.resellerapi.request.ListDomainsRequest
-import grails.plugin.heartinternet.resellerapi.request.ListInvoicesRequest
-import grails.plugin.heartinternet.resellerapi.request.ListPackageTypesRequest
 import grails.plugin.heartinternet.resellerapi.request.LogoutRequest
 import grails.plugin.spock.UnitSpec
+import spock.lang.Unroll
 
 class EppClientIntegrationSpec extends UnitSpec {
 
@@ -64,17 +63,6 @@ class EppClientIntegrationSpec extends UnitSpec {
 		assertResult xml, 2200, "Invalid clID or pw"
 	}
 
-	def "listing domains should return a response"() {
-		given: "client is connected but not logged in"
-		dummyClient.connect()
-
-		when: "requesting the list of domains"
-		def xml = send(new ListDomainsRequest())
-
-		then:
-		assertIsCheckYourLogin xml
-	}
-
 	def "logging out returns a response"() {
 		given: "client is connected but not logged in"
 		dummyClient.connect()
@@ -86,26 +74,32 @@ class EppClientIntegrationSpec extends UnitSpec {
 		assertResult xml, 1500, "Logging you out"
 	}
 
+	@Unroll("sending request with type of #type should return a response")
 	def "listing invoices returns a response"() {
+
 		given: "client is connected but not logged in"
-		dummyClient.connect()
+			dummyClient.connect()
+		and: "a request instance"
+			def requestPackage = "grails.plugin.heartinternet.resellerapi.request"
+			def theRequest = Class.forName(
+					"${requestPackage}.${type}",
+					true,
+					Thread.currentThread().contextClassLoader
+				).newInstance()
 
 		when: "a list invoices request is sent"
-		def xml = send(new ListInvoicesRequest())
+			def xml = send(theRequest)
 
 		then: "a response is received"
-		assertIsCheckYourLogin xml
-	}
+			assertIsCheckYourLogin xml
 
-	def "list package types returns a response"() {
-		given: "client is connected but not logged in"
-		dummyClient.connect()
-
-		when: "a list invoices request is sent"
-		def xml = send(new ListPackageTypesRequest())
-
-		then: "a response is received"
-		assertIsCheckYourLogin xml
+		where:
+			type << [
+					"ListInvoicesRequest",
+					"ListPackageTypesRequest",
+					"ListPackagesRequest",
+					"ListDomainsRequest"
+			]
 	}
 
 	private def send(request) {
