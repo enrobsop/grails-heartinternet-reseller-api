@@ -2,6 +2,7 @@ package grails.plugin.heartinternet.resellerapi
 
 import grails.plugin.heartinternet.resellerapi.request.ListDomainsRequest
 import grails.plugin.heartinternet.resellerapi.request.ListInvoicesRequest
+import grails.plugin.heartinternet.resellerapi.request.ListPackageTypesRequest
 import grails.plugin.heartinternet.resellerapi.request.ListPackagesRequest
 import grails.plugin.heartinternet.resellerapi.request.LogoutRequest
 import grails.plugin.spock.UnitSpec
@@ -85,6 +86,23 @@ class HeartInternetServiceSpec extends UnitSpec {
 		result*.dateOrdered == [dateFormat.parse('2000-12-31'),dateFormat.parse('2009-01-01')]
 		result*.priceExVat  == [100, 100]
 		result*.priceIncVat == [117.5, 115]
+
+	}
+
+	void "getting a list of package types works"() {
+
+		when: "getting the list of package types"
+		def result = service.listPackageTypes()
+
+		then: "the correct calls are made"
+		1 * api.send(_ as ListPackageTypesRequest) >> api
+		1 * api.getResponseAsXml() >> LIST_PACKAGE_TYPES_XML
+
+		and: "the correct types are returned"
+		result.size()       == 3
+		result*.heartId     == ['63b3d8d7a1383273','3b2db89769d20c0d','d646b5a8b964f8c6']
+		result*.serverType  == ['linux','windows','linux']
+		result*.name        == ['Gold Package','Silver Package','My Custom Config']
 
 	}
 
@@ -175,6 +193,28 @@ class HeartInternetServiceSpec extends UnitSpec {
     <trID>
       <clTRID>938d1139bfd358cfa3d6439dc9c64da9</clTRID>
       <svTRID>test-18de054d4a734313bd79f46c7d325881</svTRID>
+    </trID>
+  </response>
+</epp>
+""".trim())
+
+	static final def LIST_PACKAGE_TYPES_XML = new XmlSlurper().parseText("""
+<?xml version='1.0'?>
+<epp xmlns="urn:ietf:params:xml:ns:epp-1.0" xmlns:ext-package="http://www.heartinternet.co.uk/whapi/ext-package-2.0">
+  <response>
+    <result code='1000'>
+      <msg>Command completed successfully</msg>
+    </result>
+    <resData>
+      <ext-package:lstData>
+        <ext-package:packageType id='63b3d8d7a1383273' serverType='linux'>Gold Package</ext-package:packageType>
+        <ext-package:packageType id='3b2db89769d20c0d' serverType='windows'>Silver Package</ext-package:packageType>
+        <ext-package:packageType id='d646b5a8b964f8c6' serverType='linux'>My Custom Config</ext-package:packageType>
+      </ext-package:lstData>
+    </resData>
+    <trID>
+      <clTRID>82562e1830f07de8e8913cb894efd6b5</clTRID>
+      <svTRID>test-0ba2a26d4d9c5b44a8b268f102a71fc3</svTRID>
     </trID>
   </response>
 </epp>

@@ -3,8 +3,10 @@ package grails.plugin.heartinternet.resellerapi
 import grails.plugin.heartinternet.resellerapi.data.HeartDomain
 import grails.plugin.heartinternet.resellerapi.data.HeartInvoice
 import grails.plugin.heartinternet.resellerapi.data.HeartPackage
+import grails.plugin.heartinternet.resellerapi.data.HeartPackageType
 import grails.plugin.heartinternet.resellerapi.request.ListDomainsRequest
 import grails.plugin.heartinternet.resellerapi.request.ListInvoicesRequest
+import grails.plugin.heartinternet.resellerapi.request.ListPackageTypesRequest
 import grails.plugin.heartinternet.resellerapi.request.ListPackagesRequest
 import grails.plugin.heartinternet.resellerapi.request.LogoutRequest
 
@@ -45,6 +47,20 @@ class HeartInternetService {
 			new HeartDomain(
 				name:       it.text(),
 				isHosted:   it.@hosted.text() == "1"
+			)
+		}
+	}
+
+	def listPackageTypes() {
+		def xml = send(new ListPackageTypesRequest())
+		xml = xml.declareNamespace('ext-package':"http://www.heartinternet.co.uk/whapi/ext-package-2.0")
+
+		def packageTypes = xml.response.resData.'ext-package:lstData'.'ext-package:packageType'
+		packageTypes.collect {
+			new HeartPackageType(
+				heartId:    it.@id.text(),
+				name:       it.text(),
+				serverType: it.@serverType.text()
 			)
 		}
 	}

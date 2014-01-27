@@ -3,6 +3,7 @@ import grails.plugin.heartinternet.resellerapi.EppClient
 import grails.plugin.heartinternet.resellerapi.XmlResponseHelper
 import grails.plugin.heartinternet.resellerapi.request.ListDomainsRequest
 import grails.plugin.heartinternet.resellerapi.request.ListInvoicesRequest
+import grails.plugin.heartinternet.resellerapi.request.ListPackageTypesRequest
 import grails.plugin.heartinternet.resellerapi.request.LogoutRequest
 import grails.plugin.spock.UnitSpec
 
@@ -91,6 +92,17 @@ class EppClientIntegrationSpec extends UnitSpec {
 
 		when: "a list invoices request is sent"
 		def xml = send(new ListInvoicesRequest())
+
+		then: "a response is received"
+		assertIsCheckYourLogin xml
+	}
+
+	def "list package types returns a response"() {
+		given: "client is connected but not logged in"
+		dummyClient.connect()
+
+		when: "a list invoices request is sent"
+		def xml = send(new ListPackageTypesRequest())
 
 		then: "a response is received"
 		assertIsCheckYourLogin xml
