@@ -45,3 +45,4 @@ out/
 *.iws
 c.tld
 fmt.tld
+plugin.xml
