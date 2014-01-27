@@ -1,4 +1,8 @@
 package grails.plugin.heartinternet.resellerapi
+
+import grails.plugin.heartinternet.resellerapi.data.HeartDomain
+import grails.plugin.heartinternet.resellerapi.data.HeartInvoice
+import grails.plugin.heartinternet.resellerapi.data.HeartPackage
 import grails.plugin.heartinternet.resellerapi.request.ListDomainsRequest
 import grails.plugin.heartinternet.resellerapi.request.ListInvoicesRequest
 import grails.plugin.heartinternet.resellerapi.request.ListPackagesRequest

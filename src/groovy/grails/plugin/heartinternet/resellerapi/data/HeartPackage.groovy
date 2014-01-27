@@ -1,4 +1,4 @@
-package grails.plugin.heartinternet.resellerapi
+package grails.plugin.heartinternet.resellerapi.data
 
 class HeartPackage {
 
