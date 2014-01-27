@@ -10,6 +10,9 @@ grails.project.dependency.resolution = {
     repositories {
         grailsCentral()
         mavenCentral()
+	    mavenRepo "http://repo.grails.org/grails/libs-releases/"
+	    mavenRepo "http://m2repo.spockframework.org/ext/"
+	    mavenRepo "http://m2repo.spockframework.org/snapshots/"
     }
 
     dependencies {
@@ -29,6 +32,8 @@ grails.project.dependency.resolution = {
 		    export = false
 		    exclude 'spock-grails-support'
 	    }
+
+	    compile ":joda-time:1.4"
 
     }
 
