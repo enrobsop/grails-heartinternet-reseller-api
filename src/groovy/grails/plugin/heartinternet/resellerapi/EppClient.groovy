@@ -85,7 +85,7 @@ class EppClient {
 	}
 
 	private String readResponse() {
-		print "Receiving..."
+		log.debug "Receiving..."
 
 		int dataSize = incomingBytesAvailable
 		log.debug " $dataSize bytes... "
