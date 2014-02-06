@@ -1,6 +1,7 @@
 package grails.plugin.heartinternet.resellerapi
 
 import grails.plugin.heartinternet.resellerapi.request.LoginRequest
+import groovy.util.logging.Log4j
 
 import javax.net.ssl.SSLSocketFactory
 
@@ -8,6 +9,7 @@ import static grails.plugin.heartinternet.resellerapi.EppClientHelper.prepareFor
 import static grails.plugin.heartinternet.resellerapi.EppClientHelper.unpackN
 
 @Mixin(EppClientHelper)
+@Log4j
 class EppClient {
 
 	def host
@@ -25,7 +27,7 @@ class EppClient {
 		connection  = SSLSocketFactory.default.createSocket(host, port)
 		writer      = new PrintWriter(connection.outputStream, true)
 		inputStream = connection.inputStream
-		println "Connected to: $host on port $port"
+		log.info "Connected to: $host on port $port"
 		lastResponse = readResponse()
 		this
 	}
@@ -46,7 +48,7 @@ class EppClient {
 
 	def getResponseAsXml() {
 		def flattened = XmlResponseHelper.flatten(response)
-		println "Flattening response: raw:${response.length()} chars, flattened:${flattened.length()} chars"
+		log.debug "Flattening response: raw:${response.length()} chars, flattened:${flattened.length()} chars"
 		response ? new XmlSlurper().parseText(flattened) : null
 	}
 
@@ -74,10 +76,10 @@ class EppClient {
 	EppClient sendData(String message) {
 		handleConnectionNotReady()
 		def prepared = prepareForEpp(message)
-		print "\nSending...${prepared.length() -4}bytes...\n[$prepared]\n"
+		log.debug "\nSending...${prepared.length() -4}bytes...\n[$prepared]\n"
 		writer.print(prepared)
 		writer.flush()
-		println "Sending complete."
+		log.debug "Sending complete."
 		lastResponse = readResponse()
 		this
 	}
@@ -86,12 +88,12 @@ class EppClient {
 		print "Receiving..."
 
 		int dataSize = incomingBytesAvailable
-		print " $dataSize bytes... "
+		log.debug " $dataSize bytes... "
 
 		def received = receive(dataSize)
 		received = ensureXmlIsComplete(received)
 
-		println " complete. [${received.bytes.length} bytes, ${received.length()} chars]\n[$received]\n\n"
+		log.debug " complete. [${received.bytes.length} bytes, ${received.length()} chars]\n[$received]\n\n"
 		received.trim()
 	}
 
