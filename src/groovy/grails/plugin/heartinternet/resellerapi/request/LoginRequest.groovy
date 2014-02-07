@@ -2,7 +2,7 @@ package grails.plugin.heartinternet.resellerapi.request
 import grails.plugin.heartinternet.resellerapi.ApiRequest
 import grails.plugin.heartinternet.resellerapi.XmlRequest
 
-class LoginRequest implements ApiRequest {
+class LoginRequest extends ApiRequest {
 
 	def clID
 	def password
@@ -48,7 +48,7 @@ class LoginRequest implements ApiRequest {
 						}
 					}
 				}
-				clTRID("2b8257ac1c3d2ee9d667a252cfe23373")
+				clTRID("${clTRID}")
 			}
 		}
 		request.toFlattenedString()

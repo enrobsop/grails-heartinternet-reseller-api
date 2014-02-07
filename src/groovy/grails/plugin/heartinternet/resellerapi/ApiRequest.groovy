@@ -1,7 +1,9 @@
 package grails.plugin.heartinternet.resellerapi
 
-interface ApiRequest {
+abstract class ApiRequest {
 
-	String getMessage()
+	String clTRID = "${this.getClass().simpleName}-${System.currentTimeMillis()}"
+
+	abstract String getMessage()
 
 }
