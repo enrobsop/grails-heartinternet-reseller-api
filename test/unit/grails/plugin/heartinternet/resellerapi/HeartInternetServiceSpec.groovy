@@ -7,6 +7,7 @@ import grails.plugin.heartinternet.resellerapi.request.ListPackagesRequest
 import grails.plugin.heartinternet.resellerapi.request.LogoutRequest
 import grails.plugin.spock.UnitSpec
 import grails.test.mixin.TestFor
+import spock.lang.Unroll
 
 import java.text.SimpleDateFormat
 
@@ -20,6 +21,7 @@ class HeartInternetServiceSpec extends UnitSpec {
 	def setup() {
 		api = Mock(EppClient)
 		service.eppClient = api
+		service.reuseClient = true
 	}
 
 	void "logging out works"() {
@@ -105,6 +107,50 @@ class HeartInternetServiceSpec extends UnitSpec {
 		result*.name        == ['Gold Package','Silver Package','My Custom Config']
 
 	}
+
+	@Unroll("can wrap #action with login and logout")
+	void "can call any of the methods logging in before and logging out after the method"() {
+
+		given: "the expected order of xml responses"
+			api.getResponseAsXml() >>> [LOGIN_XML, actionXmlResponse, LOGOUT_XML]
+
+		when: "prefixing and suffixing a method call"
+			service."login${action.capitalize()}Logout"()
+
+		then: "the dynamic method is accepted"
+			notThrown MissingMethodException
+		and: "the correct calls are made"
+			1 * api.connect() >> api
+			1 * api.login()
+			1 * api.send({it.getClass() == expectedRequestType}) >> api
+			1 * api.send(_ as LogoutRequest) >> api
+
+		where:
+			action              | actionXmlResponse         | expectedRequestType
+			"listDomains"       | LIST_DOMAINS_XML          | ListDomainsRequest
+			"listPackageTypes"  | LIST_PACKAGE_TYPES_XML    | ListPackageTypesRequest
+			"listPackages"      | LIST_PACKAGES_XML         | ListPackagesRequest
+			"listInvoices"      | LIST_INVOICES_XML         | ListInvoicesRequest
+
+	}
+
+	static final def LOGIN_XML = new XmlSlurper().parseText("""
+<?xml version='1.0'?>
+<epp xmlns="urn:ietf:params:xml:ns:epp-1.0">
+  <response>
+    <result code='1000'>
+      <msg>Command completed successfully</msg>
+    </result>
+    <extension>
+      <ext-whapi:sessionExpiry xmlns:ext-whapi="http://www.heartinternet.co.uk/whapi/ext-whapi-2.0" unit="s">600</ext-whapi:sessionExpiry>
+    </extension>
+    <trID>
+      <clTRID>1b8257ac1c3d2ee9d667a252cfe23373</clTRID>
+      <svTRID>test-97384f32ba0a56cf40fd047a5b01e39b</svTRID>
+    </trID>
+  </response>
+</epp>
+""".trim())
 
 	static final def LOGOUT_XML = new XmlSlurper().parseText("""
 <?xml version='1.0'?>

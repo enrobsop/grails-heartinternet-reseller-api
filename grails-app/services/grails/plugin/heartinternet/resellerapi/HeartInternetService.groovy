@@ -10,23 +10,28 @@ import grails.plugin.heartinternet.resellerapi.request.ListPackageTypesRequest
 import grails.plugin.heartinternet.resellerapi.request.ListPackagesRequest
 import grails.plugin.heartinternet.resellerapi.request.LogoutRequest
 
+import java.beans.Introspector
 import java.text.SimpleDateFormat
 
 class HeartInternetService {
 
 	def grailsApplication
 	EppClient eppClient
+	def reuseClient = false // intended for testing to allow mock logins.
 
 	boolean login() {
 		def clID    = grailsApplication.config.heartinternet.resellerapi.clID
 		def pw      = grailsApplication.config.heartinternet.resellerapi.pw
 
-		eppClient = new EppClient(
-				host: grailsApplication.config.heartinternet.resellerapi.host ?: "api.heartinternet.co.uk",
-				port: grailsApplication.config.heartinternet.resellerapi.port ?: 1701,
-				clID: grailsApplication.config.heartinternet.resellerapi.clID,
-				pw:   grailsApplication.config.heartinternet.resellerapi.pw
-		).connect().login()
+		if (!reuseClient) {
+			eppClient = new EppClient(
+					host: grailsApplication.config.heartinternet.resellerapi.host ?: "api.heartinternet.co.uk",
+					port: grailsApplication.config.heartinternet.resellerapi.port ?: 1701,
+					clID: grailsApplication.config.heartinternet.resellerapi.clID,
+					pw:   grailsApplication.config.heartinternet.resellerapi.pw
+			)
+		}
+		eppClient.connect().login()
 
 		def xml = eppClient.responseAsXml
 		getResultCode(xml) == 1000
@@ -100,7 +105,21 @@ class HeartInternetService {
 	}
 
 	private int getResultCode(xml) {
-		XmlResponseHelper.getResult(xml).code
+		xml ? XmlResponseHelper.getResult(xml).code : -1
+	}
+
+	def methodMissing(String name, args) {
+
+		def loginLogoutPattern = /^login(\p{Alnum}+)Logout/
+		if( name ==~ loginLogoutPattern) {
+			def m           = name =~ loginLogoutPattern
+			String action   = Introspector.decapitalize(m[0][1])
+			login()
+			def result = this."${action}"()
+			logout()
+			return result
+		}
+
 	}
 
 }
