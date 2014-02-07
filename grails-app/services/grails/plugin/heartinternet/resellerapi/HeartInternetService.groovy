@@ -18,7 +18,9 @@ class HeartInternetService {
 
 	def grailsApplication
 	EppClient eppClient
-	def reuseClient = false // intended for testing to allow mock logins.
+	boolean reuseClient = false // intended for testing to allow mock logins.
+
+	private static final def LOGIN_LOGOUT_PATTERN = /^login(\p{Alnum}+)Logout/
 
 	boolean login() {
 		def clID    = grailsApplication.config.heartinternet.resellerapi.clID
@@ -53,7 +55,7 @@ class HeartInternetService {
 		eppClient.response
 	}
 
-	def listDomains() {
+	List<HeartDomain> listDomains() {
 		def xml = send(new ListDomainsRequest())
 		xml = xml.declareNamespace('ext-domain': "http://www.heartinternet.co.uk/whapi/ext-domain-2.0")
 
@@ -66,7 +68,7 @@ class HeartInternetService {
 		}
 	}
 
-	def listPackageTypes() {
+	List<HeartPackageType> listPackageTypes() {
 		def xml = send(new ListPackageTypesRequest())
 		xml = xml.declareNamespace('ext-package':"http://www.heartinternet.co.uk/whapi/ext-package-2.0")
 
@@ -80,7 +82,7 @@ class HeartInternetService {
 		}
 	}
 
-	def listPackages() {
+	List<HeartPackage> listPackages() {
 		def xml = send(new ListPackagesRequest())
 		xml = xml.declareNamespace('ext-package':"http://www.heartinternet.co.uk/whapi/ext-package-2.0")
 
@@ -93,7 +95,7 @@ class HeartInternetService {
 		}
 	}
 
-	def listInvoices() {
+	List<HeartInvoice> listInvoices() {
 		def xml = send(new ListInvoicesRequest())
 		xml = xml.declareNamespace('ext-billing':"http://www.heartinternet.co.uk/whapi/ext-billing-2.0")
 
@@ -119,22 +121,23 @@ class HeartInternetService {
 	}
 
 	def methodMissing(String name, args) {
-
-		def loginLogoutPattern = /^login(\p{Alnum}+)Logout/
-		if( name ==~ loginLogoutPattern) {
-			def m           = name =~ loginLogoutPattern
-			String action   = Introspector.decapitalize(m[0][1])
-			login()
-			def result
-			if (args.length == 1) {
-				result = this."${action}"(args[0])
-			} else {
-				result = this."${action}"()
-			}
-			logout()
-			return result
+		if( name ==~ LOGIN_LOGOUT_PATTERN) {
+			return handleActionWrappedWithLoginAndLogout(name, args)
 		}
+	}
 
+	private def handleActionWrappedWithLoginAndLogout(String name, args) {
+		def matcher = name =~ LOGIN_LOGOUT_PATTERN
+		def action = Introspector.decapitalize(matcher[0][1])
+		login()
+		def result
+		if (args.length == 1) {
+			result = this."${action}"(args[0])
+		} else {
+			result = this."${action}"()
+		}
+		logout()
+		result
 	}
 
 }
