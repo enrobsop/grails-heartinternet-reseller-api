@@ -108,8 +108,33 @@ class HeartInternetServiceSpec extends UnitSpec {
 
 	}
 
+	void "can send explicit ApiRequests"() {
+
+		given: "a custom request"
+		def theCustomRequest = new ApiRequest() {
+			@Override
+			String getMessage() {"<custom>request</custom>"}
+		}
+		and: "a response"
+		def expectedTextResponse    = "<response>Custom Request Result</response>"
+		api.send(theCustomRequest)  >> api
+		api.getResponseAsXml()      >> new XmlSlurper().parseText(expectedTextResponse)
+		api.getResponse()           >> expectedTextResponse
+
+		when: "executing and expecting an XML repsonse"
+		def xmlResult = service.sendWithResponseAsXml(theCustomRequest)
+		then: "the correct xml is returned"
+		xmlResult.text() == "Custom Request Result"
+
+		when: "executing and expecting a text response"
+		def strResult = service.sendWithResponseAsText(theCustomRequest)
+		then: "the correctly text is returned"
+		strResult == expectedTextResponse
+
+	}
+
 	@Unroll("can wrap #action with login and logout")
-	void "can call any of the methods logging in before and logging out after the method"() {
+	void "can wrap existing actions with login and logout"() {
 
 		given: "the expected order of xml responses"
 			api.getResponseAsXml() >>> [LOGIN_XML, actionXmlResponse, LOGOUT_XML]
@@ -126,11 +151,37 @@ class HeartInternetServiceSpec extends UnitSpec {
 			1 * api.send(_ as LogoutRequest) >> api
 
 		where:
-			action              | actionXmlResponse         | expectedRequestType
-			"listDomains"       | LIST_DOMAINS_XML          | ListDomainsRequest
-			"listPackageTypes"  | LIST_PACKAGE_TYPES_XML    | ListPackageTypesRequest
-			"listPackages"      | LIST_PACKAGES_XML         | ListPackagesRequest
-			"listInvoices"      | LIST_INVOICES_XML         | ListInvoicesRequest
+			action                  | actionXmlResponse         | expectedRequestType
+			"listDomains"           | LIST_DOMAINS_XML          | ListDomainsRequest
+			"listPackageTypes"      | LIST_PACKAGE_TYPES_XML    | ListPackageTypesRequest
+			"listPackages"          | LIST_PACKAGES_XML         | ListPackagesRequest
+			"listInvoices"          | LIST_INVOICES_XML         | ListInvoicesRequest
+
+	}
+
+	@Unroll("can wrap #action with login and logout")
+	void "can wrap explicit actions with login and logout"() {
+
+		given: "the expected order of xml responses"
+			api.getResponseAsXml() >>> [LOGIN_XML, SOME_XML, LOGOUT_XML]
+		and: "the explicit action"
+			def theCustomApiRequest = new ApiRequest() {
+				String getMessage() { "" }
+			}
+
+		when: "prefixing and suffixing a method call"
+			service."login${action.capitalize()}Logout"(theCustomApiRequest)
+
+		then: "the dynamic method is accepted"
+			notThrown MissingMethodException
+		and: "the correct calls are made"
+			1 * api.connect() >> api
+			1 * api.login()
+			1 * api.send(theCustomApiRequest) >> api
+			1 * api.send(_ as LogoutRequest) >> api
+
+		where:
+			action << ["sendWithResponseAsXml", "sendWithResponseAsText"]
 
 	}
 
@@ -151,6 +202,8 @@ class HeartInternetServiceSpec extends UnitSpec {
   </response>
 </epp>
 """.trim())
+
+	static final def SOME_XML = LOGIN_XML
 
 	static final def LOGOUT_XML = new XmlSlurper().parseText("""
 <?xml version='1.0'?>

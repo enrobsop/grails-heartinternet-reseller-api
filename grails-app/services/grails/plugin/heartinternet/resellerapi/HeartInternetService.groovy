@@ -9,6 +9,7 @@ import grails.plugin.heartinternet.resellerapi.request.ListInvoicesRequest
 import grails.plugin.heartinternet.resellerapi.request.ListPackageTypesRequest
 import grails.plugin.heartinternet.resellerapi.request.ListPackagesRequest
 import grails.plugin.heartinternet.resellerapi.request.LogoutRequest
+import groovy.util.slurpersupport.GPathResult
 
 import java.beans.Introspector
 import java.text.SimpleDateFormat
@@ -41,6 +42,15 @@ class HeartInternetService {
 		def xml = send(new LogoutRequest())
 		eppClient = null
 		getResultCode(xml) == 1500
+	}
+
+	GPathResult sendWithResponseAsXml(ApiRequest request) {
+		send(request)
+	}
+
+	String sendWithResponseAsText(ApiRequest request) {
+		eppClient.send(request)
+		eppClient.response
 	}
 
 	def listDomains() {
@@ -115,7 +125,12 @@ class HeartInternetService {
 			def m           = name =~ loginLogoutPattern
 			String action   = Introspector.decapitalize(m[0][1])
 			login()
-			def result = this."${action}"()
+			def result
+			if (args.length == 1) {
+				result = this."${action}"(args[0])
+			} else {
+				result = this."${action}"()
+			}
 			logout()
 			return result
 		}
