@@ -55,8 +55,8 @@ class HeartInternetService {
 		eppClient.response
 	}
 
-	List<HeartDomain> listDomains() {
-		def xml = send(new ListDomainsRequest())
+	List<HeartDomain> listDomains(props=[:]) {
+		def xml = send(new ListDomainsRequest(props))
 		xml = xml.declareNamespace('ext-domain': "http://www.heartinternet.co.uk/whapi/ext-domain-2.0")
 
 		def domains = xml.response.resData.'ext-domain:lstData'.'ext-domain:domainInfo'
