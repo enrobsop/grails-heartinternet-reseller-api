@@ -91,15 +91,15 @@ class EppClientIntegrationSpec extends UnitSpec {
 			def xml = send(theRequest)
 
 		then: "a response is received"
-			assertIsCheckYourLogin xml
+			"${requiredAssertion}"(xml)
 
 		where:
-			type << [
-					"ListInvoicesRequest",
-					"ListPackageTypesRequest",
-					"ListPackagesRequest",
-					"ListDomainsRequest"
-			]
+			type                        | requiredAssertion
+			"ListInvoicesRequest"       | "assertIsCheckYourLogin"
+			"ListPackageTypesRequest"   | "assertIsCheckYourLogin"
+			"ListPackagesRequest"       | "assertIsCheckYourLogin"
+			"ListDomainsRequest"        | "assertIsCheckYourLogin"
+			"GetDomainInfoRequest"      | "assertIsNoSuchCommandImplemented"
 	}
 
 	private def send(request) {
@@ -111,6 +111,13 @@ class EppClientIntegrationSpec extends UnitSpec {
 		def result = XmlResponseHelper.getResult(xml)
 		assert result.code == 2101
 		assert result.msg.contains("check your login")
+	}
+
+	private void assertIsNoSuchCommandImplemented(xml) {
+		assert xml != null
+		def result = XmlResponseHelper.getResult(xml)
+		assert result.code == 2000
+		assert result.msg.contains("No such command implemented")
 	}
 
 	private void assertResult(xml, expectedCode, expectedMsg) {

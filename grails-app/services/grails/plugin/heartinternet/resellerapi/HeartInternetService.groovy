@@ -1,9 +1,11 @@
 package grails.plugin.heartinternet.resellerapi
 
 import grails.plugin.heartinternet.resellerapi.data.HeartDomain
+import grails.plugin.heartinternet.resellerapi.data.HeartDomainInfo
 import grails.plugin.heartinternet.resellerapi.data.HeartInvoice
 import grails.plugin.heartinternet.resellerapi.data.HeartPackage
 import grails.plugin.heartinternet.resellerapi.data.HeartPackageType
+import grails.plugin.heartinternet.resellerapi.request.GetDomainInfoRequest
 import grails.plugin.heartinternet.resellerapi.request.ListDomainsRequest
 import grails.plugin.heartinternet.resellerapi.request.ListInvoicesRequest
 import grails.plugin.heartinternet.resellerapi.request.ListPackageTypesRequest
@@ -57,7 +59,7 @@ class HeartInternetService {
 
 	List<HeartDomain> listDomains(props=[:]) {
 		def xml = send(new ListDomainsRequest(props))
-		xml = xml.declareNamespace('ext-domain': "http://www.heartinternet.co.uk/whapi/ext-domain-2.0")
+		xml = xml.declareNamespace('ext-domain': "http://www.heartinternet.co.uk/whapi/ext-domain-2.1")
 
 		def domains = xml.response.resData.'ext-domain:lstData'.'ext-domain:domainInfo'
 		domains.collect {
@@ -66,6 +68,40 @@ class HeartInternetService {
 				isHosted:   it.@hosted.text() == "1"
 			)
 		}
+	}
+
+	HeartDomainInfo getDomainInfo(String domainName) {
+		def xml = send(new GetDomainInfoRequest(domainName: domainName))
+		xml = xml.declareNamespace('domain':        "urn:ietf:params:xml:ns:domain-1.0")
+		xml = xml.declareNamespace('ext-domain':    "http://www.heartinternet.co.uk/whapi/ext-domain-2.1")
+
+		def domainInfo      = xml.response.resData.'domain:infData'
+		def domainInfoExtra = xml.response.extension.'ext-domain:infData'
+		new HeartDomainInfo(
+			domainName:         domainInfo."domain:name",
+			roid:               domainInfo."domain:roid",
+			status:             domainInfo."domain:status".@s,
+			statusDescription:  domainInfo."domain:status".text(),
+			registrant:         domainInfo."domain:registrant",
+			contact:            domainInfo."domain:contact".text(),
+			contactType:        domainInfo."domain:contact".@type,
+			nameservers:        domainInfo."domain:ns"."domain:hostAttr"*."domain:hostName"*.text(),
+			createdDate:        tryParseIsoDate(domainInfo."domain:crDate".text()),
+			expiryDate:         tryParseIsoDate(domainInfo."domain:exDate".text()),
+			authInfoPw:         domainInfo."domain:authInfo"."domain:pw".text(),
+			extStatus:          domainInfoExtra."ext-domain:extStatus".text(),
+			hasPrivacy:         domainInfoExtra."ext-domain:privacy".size() > 0,
+			hostingPackage:     domainInfoExtra."ext-domain:package".text(),
+		)
+	}
+
+	private Date tryParseIsoDate(str) {
+		try {
+			return DateHelper.isoDate(str)
+		} catch (Exception e) {
+			log.error(e.message, e)
+		}
+		null
 	}
 
 	List<HeartPackageType> listPackageTypes() {
