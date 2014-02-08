@@ -60,7 +60,7 @@ public class SampleXml {
 
 	static final def LIST_PACKAGES_XML = new XmlSlurper().parseText("""
 <?xml version='1.0'?>
-<epp xmlns="urn:ietf:params:xml:ns:epp-1.0" xmlns:ext-package="http://www.heartinternet.co.uk/whapi/ext-package-2.0">
+<epp xmlns="urn:ietf:params:xml:ns:epp-1.0" xmlns:ext-package="http://www.heartinternet.co.uk/whapi/ext-package-2.1">
   <response>
     <result code='1000'>
       <msg>Command completed successfully</msg>
@@ -116,7 +116,7 @@ public class SampleXml {
 
 	static final def LIST_PACKAGE_TYPES_XML = new XmlSlurper().parseText("""
 <?xml version='1.0'?>
-<epp xmlns="urn:ietf:params:xml:ns:epp-1.0" xmlns:ext-package="http://www.heartinternet.co.uk/whapi/ext-package-2.0">
+<epp xmlns="urn:ietf:params:xml:ns:epp-1.0" xmlns:ext-package="http://www.heartinternet.co.uk/whapi/ext-package-2.1">
   <response>
     <result code='1000'>
       <msg>Command completed successfully</msg>
@@ -180,5 +180,72 @@ public class SampleXml {
   </response>
 </epp>
 """.trim())
+
+	static final def PACKAGE_INFO_XML = new XmlSlurper().parseText("""
+<?xml version='1.0'?>
+<epp xmlns="urn:ietf:params:xml:ns:epp-1.0" xmlns:package="http://www.heartinternet.co.uk/whapi/package-2.1">
+  <response>
+    <result code='1000'>
+      <msg>Command completed successfully</msg>
+    </result>
+    <resData>
+      <package:infData>
+        <package:id>2e3cc0422afb0503</package:id>
+        <package:roid>2E3CC0422AFB0503-HI</package:roid>
+        <package:status s='ok'>ok</package:status>
+        <package:counters>
+          <package:bandwidth scope='last-hour'>50</package:bandwidth>
+          <package:bandwidth scope='month'>3154</package:bandwidth>
+          <package:webSpace>267</package:webSpace>
+        </package:counters>
+        <package:limits>
+          <package:site>
+            <package:webSpace>40000</package:webSpace>
+            <package:bandwidth>20000</package:bandwidth>
+            <package:subDomains>2</package:subDomains>
+            <package:extraFTPUsers>20</package:extraFTPUsers>
+            <package:databases>200</package:databases>
+          </package:site>
+          <package:email>
+            <package:emailForwarders>unlimited</package:emailForwarders>
+            <package:emailResponders>10</package:emailResponders>
+            <package:emailLists>100</package:emailLists>
+            <package:emailBoxes>2000</package:emailBoxes>
+          </package:email>
+          <package:controlPanel>
+            <package:tool>website-builder</package:tool>
+            <package:script>wordpress</package:script>
+          </package:controlPanel>
+        </package:limits>
+        <package:detail addedDate='2008-03-14T22:03:55' updatedDate='2009-09-21T19:35:22'>
+          <package:type>0be9f5a18732b4c1</package:type>
+          <package:server role='web' type='linux'>web1.extendcp.co.uk</package:server>
+          <package:server role='ftp'>ftp1.extendcp.co.uk</package:server>
+          <package:server role='mail'>mail3.extendcp.co.uk</package:server>
+        </package:detail>
+        <package:domainName>one.example.org</package:domainName>
+        <package:domainName>three.example.org</package:domainName>
+      </package:infData>
+    </resData>
+    <extension>
+      <ext-package:infData xmlns:ext-package="http://www.heartinternet.co.uk/whapi/ext-package-2.1">
+        <ext-package:mailboxes>
+          <ext-package:mailbox type='hosted'>
+            <ext-package:emailAddress>guy@glc.example.org</ext-package:emailAddress>
+          </ext-package:mailbox>
+          <ext-package:mailbox type='hosted'>
+            <ext-package:emailAddress>john@glc.example.org</ext-package:emailAddress>
+          </ext-package:mailbox>
+        </ext-package:mailboxes>
+      </ext-package:infData>
+    </extension>
+    <trID>
+      <clTRID>bbb5a214d249f7d923e4790fd342ce89</clTRID>
+      <svTRID>test-4506e46ddcb3b4de0ba76743fd790158</svTRID>
+    </trID>
+  </response>
+</epp>
+""".trim())
+
 
 }

@@ -4,8 +4,10 @@ import grails.plugin.heartinternet.resellerapi.data.HeartDomain
 import grails.plugin.heartinternet.resellerapi.data.HeartDomainInfo
 import grails.plugin.heartinternet.resellerapi.data.HeartInvoice
 import grails.plugin.heartinternet.resellerapi.data.HeartPackage
+import grails.plugin.heartinternet.resellerapi.data.HeartPackageInfo
 import grails.plugin.heartinternet.resellerapi.data.HeartPackageType
 import grails.plugin.heartinternet.resellerapi.request.GetDomainInfoRequest
+import grails.plugin.heartinternet.resellerapi.request.GetPackageInfoRequest
 import grails.plugin.heartinternet.resellerapi.request.ListDomainsRequest
 import grails.plugin.heartinternet.resellerapi.request.ListInvoicesRequest
 import grails.plugin.heartinternet.resellerapi.request.ListPackageTypesRequest
@@ -106,7 +108,7 @@ class HeartInternetService {
 
 	List<HeartPackageType> listPackageTypes() {
 		def xml = send(new ListPackageTypesRequest())
-		xml = xml.declareNamespace('ext-package':"http://www.heartinternet.co.uk/whapi/ext-package-2.0")
+		xml = xml.declareNamespace('ext-package':"http://www.heartinternet.co.uk/whapi/ext-package-2.1")
 
 		def packageTypes = xml.response.resData.'ext-package:lstData'.'ext-package:packageType'
 		packageTypes.collect {
@@ -120,7 +122,7 @@ class HeartInternetService {
 
 	List<HeartPackage> listPackages() {
 		def xml = send(new ListPackagesRequest())
-		xml = xml.declareNamespace('ext-package':"http://www.heartinternet.co.uk/whapi/ext-package-2.0")
+		xml = xml.declareNamespace('ext-package':"http://www.heartinternet.co.uk/whapi/ext-package-2.1")
 
 		def packages = xml.response.resData.'ext-package:lstData'.'ext-package:package'
 		packages.collect {
@@ -129,6 +131,25 @@ class HeartInternetService {
 				domainName: it.'ext-package:domainName'.text()
 			)
 		}
+	}
+
+	HeartPackageInfo getPackageInfo(String packageId) {
+		def xml = send(new GetPackageInfoRequest(packageId: packageId))
+		xml = xml.declareNamespace('package':"http://www.heartinternet.co.uk/whapi/package-2.1")
+
+		def packageInfo = xml.response.resData.'package:infData'
+		new HeartPackageInfo(
+			packageId:          packageInfo."package:id",
+			roid:               packageInfo."package:roid",
+			status:             packageInfo."package:status".@s,
+			statusDescription:  packageInfo."package:status".text(),
+
+			addedDate:	    tryParseIsoDate(packageInfo."package:detail".@addedDate.text()),
+			updatedDate:	tryParseIsoDate(packageInfo."package:detail".@updatedDate.text()),
+			packageType:	packageInfo."package:detail"."package:type".text(),
+			domainNames:	packageInfo."package:domainName"*.text()
+
+		)
 	}
 
 	List<HeartInvoice> listInvoices() {

@@ -100,6 +100,7 @@ class EppClientIntegrationSpec extends UnitSpec {
 			"ListPackagesRequest"       | "assertIsCheckYourLogin"
 			"ListDomainsRequest"        | "assertIsCheckYourLogin"
 			"GetDomainInfoRequest"      | "assertIsNoSuchCommandImplemented"
+			"GetPackageInfoRequest"     | "assertIsNoSuchCommandImplemented"
 	}
 
 	private def send(request) {

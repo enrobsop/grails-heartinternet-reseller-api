@@ -39,7 +39,7 @@ class LoginRequest extends ApiRequest {
 							extURI("http://www.heartinternet.co.uk/whapi/ext-host-2.0")
 							extURI("http://www.heartinternet.co.uk/whapi/ext-mailbox-2.0")
 							extURI("http://www.heartinternet.co.uk/whapi/ext-null-2.0")
-							extURI("http://www.heartinternet.co.uk/whapi/ext-package-2.0")
+							extURI("http://www.heartinternet.co.uk/whapi/ext-package-2.1")
 							extURI("http://www.heartinternet.co.uk/whapi/ext-security-2.0")
 							extURI("http://www.heartinternet.co.uk/whapi/ext-server-2.0")
 							extURI("http://www.heartinternet.co.uk/whapi/ext-support-2.0")

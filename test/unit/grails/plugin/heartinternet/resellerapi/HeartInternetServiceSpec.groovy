@@ -1,6 +1,7 @@
 package grails.plugin.heartinternet.resellerapi
 
 import grails.plugin.heartinternet.resellerapi.request.GetDomainInfoRequest
+import grails.plugin.heartinternet.resellerapi.request.GetPackageInfoRequest
 import grails.plugin.heartinternet.resellerapi.request.ListDomainsRequest
 import grails.plugin.heartinternet.resellerapi.request.ListInvoicesRequest
 import grails.plugin.heartinternet.resellerapi.request.ListPackageTypesRequest
@@ -104,6 +105,27 @@ class HeartInternetServiceSpec extends UnitSpec {
 
 	}
 
+	def "getting package info works"() {
+
+		when: "getting info about a domain"
+		def result = service.getPackageInfo("thepackageid")
+
+		then: "the correct calls are made"
+		1 * api.send({ it.packageId == "thepackageid" } as GetPackageInfoRequest) >> api
+		1 * api.getResponseAsXml() >> PACKAGE_INFO_XML
+
+		and: "the correct result is returned"
+		result.packageId            == "2e3cc0422afb0503"
+		result.roid                 == "2E3CC0422AFB0503-HI"
+		result.status               == "ok"
+		result.statusDescription    == "ok"
+		result.addedDate	== isoDate("2008-03-14T22:03:55")
+		result.updatedDate	== isoDate("2009-09-21T19:35:22")
+		result.packageType	== "0be9f5a18732b4c1"
+		result.domainNames	== ["one.example.org", "three.example.org"]
+
+	}
+
 	void "getting a list of invoices works"() {
 
 		when: "getting the list of invoices"
@@ -188,6 +210,7 @@ class HeartInternetServiceSpec extends UnitSpec {
 			"listPackages"          | LIST_PACKAGES_XML         | ListPackagesRequest
 			"listInvoices"          | LIST_INVOICES_XML         | ListInvoicesRequest
 			"getDomainInfo"         | DOMAIN_INFO_XML           | GetDomainInfoRequest
+			"getPackageInfo"        | PACKAGE_INFO_XML          | GetPackageInfoRequest
 
 	}
 
