@@ -26,7 +26,7 @@ class LoginRequest extends ApiRequest {
 						objURI("http://www.heartinternet.co.uk/whapi/mailbox-2.0")
 						objURI("http://www.heartinternet.co.uk/whapi/null-2.0")
 						objURI("http://www.heartinternet.co.uk/whapi/offsite-package-2.1")
-						objURI("http://www.heartinternet.co.uk/whapi/package-2.0")
+						objURI("http://www.heartinternet.co.uk/whapi/package-2.1")
 						objURI("http://www.heartinternet.co.uk/whapi/server-2.0")
 						objURI("http://www.heartinternet.co.uk/whapi/support-2.0")
 						svcExtension {
