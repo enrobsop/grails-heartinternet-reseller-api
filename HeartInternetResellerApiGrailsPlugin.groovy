@@ -1,6 +1,6 @@
 class HeartInternetResellerApiGrailsPlugin {
 
-    def version = "0.1.2"
+    def version = "0.1.3"
     def grailsVersion = "2.0 > *"
 	def pluginExcludes = [
 			"grails-app/controllers/**",
